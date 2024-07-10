@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const UserController = require('../controllers/user.conroller');
+const UserController = require('../controllers/user.contoller');
 
 // Handle the /users endpoint
 router.get('/', UserController.getAllUsers);
