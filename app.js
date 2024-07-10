@@ -1,17 +1,13 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
-const userRouter = require('./routes/user.router');
 
+app.use(express.json());
 
-const port = process.env.PORT || 3000;
+const authRoutes = require('./routes/auth.router');
+app.use('/api/auth', authRoutes);
 
-app.use('/users', userRouter);
-
-// Handle other endpoints or invalid requests
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
-});
-
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
