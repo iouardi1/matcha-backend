@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { registerUser, loginUser } = require('../controllers/authController');
 const UserController = require('../controllers/user.contoller');
 
-// Handle the /users endpoint
-router.get('/', UserController.getAllUsers);
+router.post('/register', registerUser);
+router.post('/login', loginUser);
 
 // Add more routes for the /users endpoint as needed
 
