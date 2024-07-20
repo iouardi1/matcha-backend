@@ -1,6 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+var cors = require('cors')
 const app = express();
+
+app.use(cors({
+  origin: 'http://localhost:3001', // Your Next.js frontend URL
+  credentials: true // Allow credentials (cookies) to be sent
+}));
 
 app.use(express.json());
 

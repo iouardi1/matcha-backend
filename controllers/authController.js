@@ -48,8 +48,12 @@ const loginUser = async (req, res) => {
       }
   
       const token = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: '1h' });
-  
-      res.json({ message: 'Logged in successfully', token });
+      res.cookie("accessToken",token)
+      res.cookie('token', token);
+      console.log('object');
+    //   res.redirect(302, `${process.env.CLIENT_URL}/profile`);
+      res.status(200).json({ message: 'Login successful' , token: token });
+    //   res.status(201)
     } catch (error) {
       res.status(500).json({ error: 'Internal Server Error' });
     }
