@@ -1,24 +1,22 @@
+//requirements
 require('dotenv').config();
+require('./strategies/googleStrategy');
 const express = require('express');
-const app = express();
-
-app.use(express.json());
-
-const authRoutes = require('./routes/auth.router');
-app.use('/api/auth', authRoutes);
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-})
-const passport = require('passport');
+const cors = require('cors')
 const session = require('express-session');
-require('./strategies/googleStrategy'); // Require the external file
+const passport = require('passport');
+//routes
 const userRouter = require('./routes/user.router');
+const authRoutes = require('./routes/auth.router');
+const profileRoutes = require('./routes/profile.router');
+//port
+const PORT = process.env.PORT || 3000;
 
-
+const app = express();
+app.use(express.json());
+app.use(cors())
 app.use(session({
-  secret: 'your-secret-key',
+  secret: 'secret',
   resave: false,
   saveUninitialized: false
 }));
@@ -26,16 +24,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
+app.use('/api/auth', authRoutes);
 app.use('/users', userRouter);
-
-
-app.get('/profile', (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  res.send(`Hello ${req.user.displayName}`);
-});
+app.use('/profile', profileRoutes);
 
 app.get('/logout', (req, res) => {
   req.logout((err) => {
@@ -43,3 +34,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
   });
 });
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+})
