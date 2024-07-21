@@ -1,5 +1,17 @@
+//requirements
 require('dotenv').config();
+require('./strategies/googleStrategy');
 const express = require('express');
+
+const PORT = process.env.PORT || 3000;
+const passport = require('passport');
+const session = require('express-session');
+//routes
+const userRouter = require('./routes/user.router');
+const authRoutes = require('./routes/auth.router');
+const profileRoutes = require('./routes/profile.router');
+
+
 var cors = require('cors')
 const app = express();
 
@@ -7,24 +19,9 @@ app.use(cors({
   origin: 'http://localhost:3001', // Your Next.js frontend URL
   credentials: true // Allow credentials (cookies) to be sent
 }));
-
 app.use(express.json());
-
-const authRoutes = require('./routes/auth.router');
-app.use('/api/auth', authRoutes);
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-})
-const passport = require('passport');
-const session = require('express-session');
-require('./strategies/googleStrategy'); // Require the external file
-const userRouter = require('./routes/user.router');
-
-
 app.use(session({
-  secret: 'your-secret-key',
+  secret: 'secret',
   resave: false,
   saveUninitialized: false
 }));
@@ -32,16 +29,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
+app.use('/api/auth', authRoutes);
 app.use('/users', userRouter);
-
-
-app.get('/profile', (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.redirect('/');
-  }
-  res.send(`Hello ${req.user.displayName}`);
-});
+app.use('/profile', profileRoutes);
 
 app.get('/logout', (req, res) => {
   req.logout((err) => {
@@ -49,3 +39,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
   });
 });
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+})
