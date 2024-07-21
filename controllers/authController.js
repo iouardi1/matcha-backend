@@ -5,10 +5,9 @@ const SECRET_KEY = process.env.JWT_SECRET;
 
 class AuthController {
 	static async registerUser(req, res) {
-		const { firstname, lastname, email, password } = req.body;
+		const { firstname, lastname, username, email, password } = req.body;
 
-		if (!firstname || !lastname || !email || !password) {
-			console.log(firstname + " " + lastname + " " + email + " " + password);
+		if (!firstname || !lastname || !username || !email || !password) {
 			return res.status(400).json({ error: "All fields are required" });
 		}
 
@@ -18,6 +17,7 @@ class AuthController {
 			const newUser = await User.create({
 				firstname,
 				lastname,
+				username,
 				email,
 				password: hashedPassword,
 			});
@@ -25,7 +25,6 @@ class AuthController {
 				.status(201)
 				.json({ message: "User registered successfully", newUser });
 		} catch (error) {
-			// console.log(error);
 			res.status(500).json({ error: "Internal Server Error" });
 		}
 	}

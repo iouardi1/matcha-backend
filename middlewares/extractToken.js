@@ -5,8 +5,6 @@ const extractToken = (req, res, next) => {
   if (headerToken) {
       req.session.data = headerToken;
   }
-
-  console.log(req.session.data)
   next();
 }
 

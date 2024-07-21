@@ -2,10 +2,10 @@ const { default: axios } = require("axios");
 const db = require("../db/db");
 
 const User = {
-	create: async ({ firstname, lastname, email, password }) => {
+	create: async ({ firstname, lastname, username, email, password }) => {
 		const { rows } = await db.query(
-			"INSERT INTO users (firstname, lastname, email, password) VALUES ($1, $2, $3, $4) RETURNING *",
-			[firstname, lastname, email, password],
+			"INSERT INTO users (firstname, lastname, username, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+			[firstname, lastname, username, email, password],
 		);
 		return rows[0];
 	},
