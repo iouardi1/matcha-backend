@@ -25,7 +25,7 @@ const User = {
 			[id],
 		);
 		if (!rows.length) {
-			await db.query(
+			const googleUser = await db.query(
 				"INSERT INTO users (firstname, lastname, email, auth_provider, provider_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
 				[given_name, family_name, email, provider, id],
 			);
