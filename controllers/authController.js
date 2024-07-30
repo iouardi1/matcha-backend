@@ -25,7 +25,12 @@ class AuthController {
 				.status(201)
 				.json({ message: "User registered successfully", newUser });
 		} catch (error) {
-			res.status(500).json({ error: "Internal Server Error" });
+			console.log(error);
+			if (error.code === '23505' && error.constraint === 'unique_email') {
+				return res.status(400).json({ statusText: "Email already exists" });
+			}
+			return res.status(500).json({ error: "Internal Server Error" });
+
 		}
 	}
 
