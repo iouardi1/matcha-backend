@@ -17,6 +17,12 @@ const User = {
 		return rows[0];
 	},
 
+	updatePassword:  async (userId, newPassword) => {
+		const query = 'UPDATE users SET password = $1 WHERE id = $2';
+		const values = [newPassword, userId];
+		await db.query(query, values);
+	},
+
 	createGoogleAccount: async (
 		{ given_name, family_name, email, provider, id}
 	) => {

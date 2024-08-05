@@ -37,8 +37,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use("/api/auth", authRoutes);
-app.use("/users", userRouter);
-app.use("/profile", verifyTokenMiddleware, profileRoutes);
+app.use("/api/users", userRouter);
+app.use("/api/profile", verifyTokenMiddleware, profileRoutes);
 
 app.get("/logout", (req, res) => {
 	req.logout((err) => {
