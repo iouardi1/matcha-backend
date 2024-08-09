@@ -1,11 +1,27 @@
-const extractToken = (req, res, next) => {
+const jwt = require("jsonwebtoken");
 
-  const headerToken = req.headers.authorization?.split(' ')[1];
+const verifyToken = (req, res, next) => {
+	const token =
+		req.cookies?.accessToken ||
+		req.header("Authorization")?.replace("Bearer ", "");
 
-  if (headerToken) {
-      req.session.data = headerToken;
-  }
-  next();
-}
+	if (token === "undefined") {
+		return res.status(401).json({ message: "Access token is missing" });
+	}
 
-module.exports = extractToken;
+	try {
+		const decoded = jwt.verify(
+			token,
+			process.env.JWT_SECRET,
+			function (err, decoded) {
+				if (err) return res.status(500).send({ auth: false, message: err });
+				req.userId = decoded.id;
+				next();
+			},
+		);
+	} catch (error) {
+		return res.status(401).json({ message: "Invalid access token" });
+	}
+};
+
+module.exports = verifyToken;
