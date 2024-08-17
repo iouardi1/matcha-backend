@@ -9,6 +9,12 @@ router.post("/register", AuthController.registerUser);
 
 // Login route
 router.post("/login", AuthController.loginUser);
+// forget password
+router.post("/sendVerificationCode", AuthController.sendVerificationCode);
+
+router.post("/verifyCode", AuthController.verifyCodeUser);
+
+router.post("/resetPassword", AuthController.resetPasswordUser);
 
 router.get(
 	"/google",
