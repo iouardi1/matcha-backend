@@ -1,4 +1,4 @@
-const { default: axios } = require("axios");
+// const { default: axios } = require("axios");
 const db = require("../db/db");
 
 const User = {

@@ -3,10 +3,13 @@ DO $$
 BEGIN
     CREATE SEQUENCE IF NOT EXISTS users_id_seq;
     CREATE SEQUENCE IF NOT EXISTS gender_id_seq;
-    CREATE SEQUENCE IF NOT EXISTS interested_int_gender_id_seq;
+    CREATE SEQUENCE IF NOT EXISTS interested_in_gender_id_seq;
     CREATE SEQUENCE IF NOT EXISTS interested_in_relation_id_seq;
     CREATE SEQUENCE IF NOT EXISTS relationship_type_id_seq;
     CREATE SEQUENCE IF NOT EXISTS user_photo_id_seq;
+    CREATE SEQUENCE IF NOT EXISTS conversation_id_seq;
+    CREATE SEQUENCE IF NOT EXISTS participant_id_seq;
+    CREATE SEQUENCE IF NOT EXISTS message_id_seq;
 EXCEPTION 
     WHEN duplicate_table THEN 
         -- Sequences already exist, no action needed
@@ -27,13 +30,14 @@ CREATE TABLE IF NOT EXISTS public.users
     username character varying(50) COLLATE pg_catalog."default",
     auth_provider character varying(100) COLLATE pg_catalog."default",
     provider_id character varying(255) COLLATE pg_catalog."default",
+    birthday Date,
     CONSTRAINT users_pkey PRIMARY KEY (id),
     CONSTRAINT unique_email UNIQUE (email)
 )
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.users
-    OWNER to postgres;
+    OWNER to newuser;
 
 CREATE TABLE IF NOT EXISTS public.gender
 (
@@ -44,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.gender
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.gender
-    OWNER to postgres;
+    OWNER to newuser;
 
 CREATE TABLE IF NOT EXISTS public.relationship_type
 (
@@ -55,14 +59,14 @@ CREATE TABLE IF NOT EXISTS public.relationship_type
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.relationship_type
-    OWNER to postgres;
+    OWNER to newuser;
 
 CREATE TABLE IF NOT EXISTS public.interested_in_gender
 (
-    id integer NOT NULL DEFAULT nextval('interested_int_gender_id_seq'::regclass),
+    id integer NOT NULL DEFAULT nextval('interested_in_gender_id_seq'::regclass),
     user_id integer,
     gender_id integer,
-    CONSTRAINT interested_int_gender_pkey PRIMARY KEY (id),
+    CONSTRAINT interested_in_gender_pkey PRIMARY KEY (id),
     CONSTRAINT fk_gender FOREIGN KEY (gender_id)
         REFERENCES public.gender (id) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -75,7 +79,7 @@ CREATE TABLE IF NOT EXISTS public.interested_in_gender
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.interested_in_gender
-    OWNER to postgres;
+    OWNER to newuser;
 
 CREATE TABLE IF NOT EXISTS public.interested_in_relation
 (
@@ -95,7 +99,7 @@ CREATE TABLE IF NOT EXISTS public.interested_in_relation
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.interested_in_relation
-    OWNER to postgres;
+    OWNER to newuser;
 
 CREATE TABLE IF NOT EXISTS public.user_photo
 (
@@ -113,4 +117,63 @@ CREATE TABLE IF NOT EXISTS public.user_photo
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.user_photo
-    OWNER to postgres;
+    OWNER to newuser;
+
+CREATE TABLE IF NOT EXISTS public.conversation
+(
+    id integer NOT NULL DEFAULT nextval('conversation_id_seq'::regclass),
+    user_id integer,
+    time_started timestamp,
+    time_ended timestamp,
+        CONSTRAINT conversation_pkey PRIMARY KEY (id),
+        CONSTRAINT fk_user FOREIGN KEY (user_id)
+            REFERENCES public.users (id) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION
+)
+    TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.conversation
+    OWNER to newuser;
+
+
+CREATE TABLE IF NOT EXISTS public.participant
+(
+    id integer NOT NULL DEFAULT nextval('participant_id_seq'::regclass),
+    user_id integer,
+    conversation_id integer,
+    time_joined timestamp,
+    time_left timestamp,
+        CONSTRAINT participant_pkey PRIMARY KEY (id),
+	    CONSTRAINT fk_user FOREIGN KEY (user_id)
+	        REFERENCES public.users (id) MATCH SIMPLE
+	        ON UPDATE NO ACTION
+	        ON DELETE NO ACTION,
+	    CONSTRAINT fk_conversation FOREIGN KEY (conversation_id)
+	        REFERENCES public.conversation (id) MATCH SIMPLE
+	        ON UPDATE NO ACTION
+	        ON DELETE NO ACTION
+)
+    TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.participant
+    OWNER to newuser;
+
+
+CREATE TABLE IF NOT EXISTS public.message
+(
+    id integer NOT NULL DEFAULT nextval('message_id_seq'::regclass),
+    participant_id integer,
+    message_text text,
+    ts timestamp,
+        CONSTRAINT message_pkey PRIMARY KEY (id),
+        CONSTRAINT fk_user FOREIGN KEY (participant_id)
+            REFERENCES public.participant (id) MATCH SIMPLE
+            ON UPDATE NO ACTION
+            ON DELETE NO ACTION
+)
+    TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.message
+    OWNER to newuser;
+

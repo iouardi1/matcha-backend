@@ -10,6 +10,7 @@ const session = require('express-session');
 const userRouter = require('./routes/user.router');
 const authRoutes = require('./routes/auth.router');
 const profileRoutes = require('./routes/profile.router');
+const chatRouters = require('./routes/chat.router');
 
 
 var cors = require('cors')
@@ -32,6 +33,7 @@ app.use(passport.session());
 app.use('/api/auth', authRoutes);
 app.use('/users', userRouter);
 app.use('/profile', profileRoutes);
+app.use('/api/conversations', chatRouters);
 
 app.get('/logout', (req, res) => {
   req.logout((err) => {
