@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const db = require("../db/db");
 const { Profile } = require("../models/profileModel");
 
 class ProfileController {
@@ -8,6 +7,17 @@ class ProfileController {
 		const { email } = jwt.decode(token);
 		const profile = await Profile.profileData(email);
 		return res.status(200).json({ data: profile });
+	}
+
+	static async getSetupProfile(req, res) {
+		const { username } = await Profile.profileData(req.email);
+		return res.status(200).json({ username: username });
+	}
+
+	static async setupProfile(req, res) {
+		const data = req.body;
+		await Profile.profileSetup(data, req.email);
+		return res.status(200);
 	}
 }
 
