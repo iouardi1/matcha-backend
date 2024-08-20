@@ -11,6 +11,7 @@ const userRouter = require("./routes/user.router");
 const authRoutes = require("./routes/auth.router");
 const profileRoutes = require("./routes/profile.router");
 const uploadRoutes = require("./routes/upload.router");
+const chatRouters = require("./routes/chat.router");
 
 //middlewares
 const verifyTokenMiddleware = require("./middlewares/extractToken");
@@ -43,6 +44,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRouter);
 app.use("/api/profile", verifyTokenMiddleware, verifyAccountMiddleware, profileRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use('/api/conversations', chatRouters);
 
 app.get("/logout", (req, res) => {
 	req.logout((err) => {

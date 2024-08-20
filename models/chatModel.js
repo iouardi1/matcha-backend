@@ -4,7 +4,7 @@ const Conversation = {
     getMessagesWithParticipants: async (conversation_id) => {
         try {
             const result = await db.query(
-                `SELECT 
+               `SELECT 
                     m.id AS message_id,
                     m.message_text,
                     m.ts AS timestamp,
