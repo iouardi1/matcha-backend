@@ -15,7 +15,7 @@ const verifyToken = (req, res, next) => {
 			process.env.JWT_SECRET,
 			function (err, decoded) {
 				if (err) return res.status(500).send({ auth: false, message: err });
-				req.userId = decoded.id;
+				req.email = decoded.email;
 				next();
 			},
 		);

@@ -226,7 +226,7 @@ class AuthController {
 			});
 
 			const token = jwt.sign({ email: req.user.email }, SECRET_KEY, {
-				expiresIn: "1h",
+				expiresIn: "12h",
 			});
 			res.cookie("accessToken", token);
 			res.redirect(process.env.FRONTEND_LOCAL_DEV + "/profile");

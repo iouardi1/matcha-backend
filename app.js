@@ -10,9 +10,11 @@ const session = require("express-session");
 const userRouter = require("./routes/user.router");
 const authRoutes = require("./routes/auth.router");
 const profileRoutes = require("./routes/profile.router");
+const uploadRoutes = require("./routes/upload.router");
 
 //middlewares
 const verifyTokenMiddleware = require("./middlewares/extractToken");
+const verifyAccountMiddleware = require("./middlewares/verifiedAccountMiddleware");
 
 var cors = require("cors");
 const app = express();
@@ -35,10 +37,12 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRouter);
-app.use("/api/profile", verifyTokenMiddleware, profileRoutes);
+app.use("/api/profile", verifyTokenMiddleware, verifyAccountMiddleware, profileRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.get("/logout", (req, res) => {
 	req.logout((err) => {
