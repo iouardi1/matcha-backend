@@ -14,12 +14,12 @@ drop sequence users_id_seq;
 drop sequence gender_id_seq;
 drop sequence interested_in_relation_id_seq;
 drop sequence interested_in_gender_id_seq;
-drop sequence interested_int_gender_id_seq;
 drop sequence relationship_type_id_seq;
 drop sequence user_photo_id_seq;
 drop sequence participant_id_seq;
 drop sequence message_id_seq;
 drop sequence conversation_id_seq;
+drop sequence interests_id_seq;
 
 -- creating sequences
 Create sequences if they do not exist
@@ -34,6 +34,7 @@ BEGIN
     CREATE SEQUENCE IF NOT EXISTS conversation_id_seq;
     CREATE SEQUENCE IF NOT EXISTS participant_id_seq;
     CREATE SEQUENCE IF NOT EXISTS message_id_seq;
+    CREATE SEQUENCE IF NOT EXISTS interests_id_seq;
 EXCEPTION 
     WHEN duplicate_table THEN 
         -- Sequences already exist, no action needed
@@ -54,9 +55,15 @@ CREATE TABLE IF NOT EXISTS public.users
     username character varying(50) COLLATE pg_catalog."default",
     auth_provider character varying(100) COLLATE pg_catalog."default",
     provider_id character varying(255) COLLATE pg_catalog."default",
-    birthday Date,
+    birthday date,
+    gender_id integer,
+    verified_account boolean DEFAULT false,
     CONSTRAINT users_pkey PRIMARY KEY (id),
-    CONSTRAINT unique_email UNIQUE (email)
+    CONSTRAINT unique_email UNIQUE (email),
+    CONSTRAINT gender_id FOREIGN KEY (gender_id)
+        REFERENCES public.gender (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
 )
 TABLESPACE pg_default;
 
@@ -201,3 +208,37 @@ CREATE TABLE IF NOT EXISTS public.message
 ALTER TABLE IF EXISTS public.message
     OWNER to postgres;
 
+-- NEW TABLES
+
+CREATE TABLE IF NOT EXISTS public.interests
+(
+    id integer NOT NULL DEFAULT nextval('interests_id_seq'::regclass),
+    name character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT interests_pkey PRIMARY KEY (id),
+    CONSTRAINT interests_name_key UNIQUE (name)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.interests
+    OWNER to postgres;
+
+CREATE TABLE IF NOT EXISTS public.user_interests
+(
+    user_id integer NOT NULL,
+    interest_id integer NOT NULL,
+    CONSTRAINT user_interests_pkey PRIMARY KEY (user_id, interest_id),
+    CONSTRAINT user_interests_interest_id_fkey FOREIGN KEY (interest_id)
+        REFERENCES public.interests (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT user_interests_user_id_fkey FOREIGN KEY (user_id)
+        REFERENCES public.users (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.user_interests
+    OWNER to postgres;
