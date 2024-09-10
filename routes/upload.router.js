@@ -13,10 +13,22 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+
 router.post("/", upload.single("file"), (req, res) => {
 	const path1 = __dirname;
-  const newPath = path1.replace('\\routes', '');
-  res.json({ url: `${newPath}/uploads/${req.file.filename}` });
+	const newPath = path1.replace(/\\routes|\/routes/g, '');
+	const newPath1 = `${newPath}/uploads/${req.file.filename}`;
+  	res.json({ url: newPath1 });
+});
+
+router.get("/", (req, res) => {
+	const imagePath = req.query.path
+	res.sendFile(imagePath, (err) => {
+		if (err) {
+		  console.error("Error sending the file:", err);
+		  res.status(404).json({ error: "Image not found" });
+		}
+	  });
 });
 
 router.delete("/", (req, res) => {

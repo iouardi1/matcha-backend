@@ -19,6 +19,14 @@ class ProfileController {
 		await Profile.profileSetup(data, req.email);
 		return res.status(200);
 	}
+
+	static async getProfileInfos(req, res) {
+		const token = req.header("Authorization")?.replace("Bearer ", "");
+		const { email } = jwt.decode(token);
+		console.log(email);
+		const profile = await Profile.profileDataCustumized(email);
+		return res.status(200).json({ data: profile });
+	}
 }
 
 module.exports = ProfileController;
