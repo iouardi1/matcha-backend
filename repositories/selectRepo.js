@@ -21,7 +21,6 @@ async function select(tableName, fields, conditionFields) {
 			});
 		}
 		const queryText = `SELECT ${selectClause} FROM ${tableName} WHERE ${conditionClause}`;
-
 		const { rows } = await db.query(queryText);
 		return rows[0];
 	} catch (err) {

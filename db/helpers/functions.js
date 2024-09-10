@@ -1,8 +1,22 @@
 const select = require("../../repositories/selectRepo");
 
 async function findUserIdByEmail(email) {
-	const {id} = await select("users", ["id"], [["email", email]]);
-	return id
+	const { id } = await select("users", ["id"], [["email", email]]);
+	return id;
 }
 
-module.exports = { findUserIdByEmail };
+async function findGenderIdByName(name) {
+	const { id } = await select("gender", ["id"], [["name", name]]);
+	return id;
+}
+
+async function findInterestIdByName(name) {
+	const { id } = await select("interests", ["id"], [["name", name]]);
+	return id;
+}
+
+module.exports = {
+	findUserIdByEmail,
+	findGenderIdByName,
+	findInterestIdByName,
+};

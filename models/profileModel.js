@@ -1,5 +1,9 @@
 const db = require("../db/db");
-const { findUserIdByEmail } = require("../db/helpers/functions");
+const {
+	findUserIdByEmail,
+	findGenderIdByName,
+	findInterestIdByName,
+} = require("../db/helpers/functions");
 const { insertOne } = require("../repositories/insertRepo");
 const { insertMany } = require("../repositories/insertRepo");
 const select = require("../repositories/selectRepo");
@@ -29,13 +33,16 @@ const Profile = {
 			data;
 
 		const id = await findUserIdByEmail(email);
+		const gender_id = await findGenderIdByName(gender);
+		const intrested_in_gender_id = await findGenderIdByName(intrestedIn);
+
 		const row = await select("users", ["username"], [["id", id]]);
 
 		if (row.username === null) {
 			await update(
 				"users",
-				["username", "aboutme", "birthday"],
-				[username, bio, new Date(birthday)],
+				["username", "aboutme", "birthday", "gender_id"],
+				[username, bio, new Date(birthday), gender_id],
 				[["id", id]],
 			);
 		} else {
@@ -50,7 +57,6 @@ const Profile = {
 		if (images.length > 1) {
 			var imageSet = [];
 			let isProfileImage;
-
 			images.forEach(async (element, index) => {
 				if (index === 0) isProfileImage = true;
 				else isProfileImage = false;
@@ -73,6 +79,28 @@ const Profile = {
 				[id, images[0].path.url, new Date().toISOString(), true],
 			);
 		}
+
+		await insertOne(
+			"interested_in_gender",
+			["user_id", "gender_id"],
+			[id, intrested_in_gender_id],
+		);
+
+		var interestSet = [];
+		interests.forEach(async (element) => {
+			let interest_id = await findInterestIdByName(element);
+			interestSet.push([id, interest_id]);
+		});
+
+		setTimeout(async () => {
+			await insertMany(
+				"user_interests",
+				["user_id", "interest_id"],
+				interestSet,
+			);
+		}, 1000);
+		await update('users', ['verified_account'], [true], [["id", id]])
+		return id;
 	},
 };
 

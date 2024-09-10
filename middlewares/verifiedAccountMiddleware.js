@@ -1,14 +1,21 @@
 const { Profile } = require("../models/profileModel");
 
-const verifyAccount =async (req, res, next) => {
-  if (req.email) {
-    const profile = await Profile.profileData(req.email);
-    if (!profile.verified_account) {
-      
-    }
-  }
-  next()
+const verifyAccount = async (req, res, next) => {
+	const profile = await Profile.profileData(req.email);
+	if (req.email && req.path !== "/setup") {
+		if (!profile.verified_account) {
+			return res
+				.status(200)
+				.json({ shouldRedirect: true, redirectTo: "/setup" });
+		}
+	} else if (req.path === "/setup") {
+		if (profile.verified_account) {
+			return res
+				.status(200)
+				.json({ shouldRedirect: true, redirectTo: "/profile" });
+		}
+	}
+	next();
 };
 
 module.exports = verifyAccount;
-  

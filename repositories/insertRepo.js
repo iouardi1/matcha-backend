@@ -49,7 +49,6 @@ async function insertMany(tableName, fields, values) {
 		});
 
 		const queryText = `INSERT INTO ${tableName} (${setClause}) VALUES ${valueClause}`;
-
 		const { rows } = await db.query(queryText);
 		return rows[0];
 	} catch (err) {
