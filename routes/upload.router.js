@@ -15,9 +15,11 @@ const upload = multer({ storage });
 
 
 router.post("/", upload.single("file"), (req, res) => {
+	let slash;
 	const path1 = __dirname;
 	const newPath = path1.replace(/\\routes|\/routes/g, '');
-	const newPath1 = `${newPath}/uploads/${req.file.filename}`;
+	newPath.indexOf('\\') !== -1 ? slash = '\\' : slash = '/'
+	const newPath1 = `${newPath}${slash}uploads${slash}${req.file.filename}`;
   	res.json({ url: newPath1 });
 });
 

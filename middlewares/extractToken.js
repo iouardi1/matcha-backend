@@ -6,7 +6,8 @@ const verifyToken = (req, res, next) => {
 		req.header("Authorization")?.replace("Bearer ", "");
 
 	if (token === "undefined") {
-		return res.status(401).json({ message: "Access token is missing" });
+		return res.status(401).json({message: "Access token is missing" });
+		// return res.status(401).json({ shouldRedirect: true, redirectTo: "/auth/login", message: "Access token is missing" });
 	}
 
 	try {
@@ -14,13 +15,14 @@ const verifyToken = (req, res, next) => {
 			token,
 			process.env.JWT_SECRET,
 			function (err, decoded) {
-				if (err) return res.status(500).send({ auth: false, message: err });
+				if (err) return res.status(401).send({shouldRedirect: true, redirectTo: "/auth/login", auth: false, message: err });
 				req.email = decoded.email;
 				next();
 			},
 		);
 	} catch (error) {
-		return res.status(401).json({ message: "Invalid access token" });
+		return res.status(401).json({message: "Access token is missing" });
+		// return res.status(401).json({ shouldRedirect: true, redirectTo: "/auth/login", message: "Access token is missing" });
 	}
 };
 
