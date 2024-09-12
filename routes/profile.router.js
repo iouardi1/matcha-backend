@@ -7,5 +7,6 @@ router.get("/", ProfileController.getProfileDetails);
 router.post("/setup", ProfileController.setupProfile);
 router.get("/setup", ProfileController.getSetupProfile);
 router.get("/getProfileInfos", ProfileController.getProfileInfos)
+router.get("/getListOfMatches", ProfileController.getListOfMatches)
 
 module.exports = router;
