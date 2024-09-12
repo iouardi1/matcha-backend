@@ -3,6 +3,7 @@ const { Profile } = require("../models/profileModel");
 
 class ProfileController {
 	static async getProfileDetails(req, res) {
+		console.log('here');
 		const token = req.header("Authorization")?.replace("Bearer ", "");
 		const { email } = jwt.decode(token);
 		const profile = await Profile.profileData(email);
@@ -16,19 +17,17 @@ class ProfileController {
 	}
 
 	static async setupProfile(req, res) {
-		
 		const data = req.body;
 		await Profile.profileSetup(data, req.email);
-		return res.status(200);
+		return res.status(200).json({ shouldRedirect: true, redirectTo: "/accueil"});
 	}
 
 	static async getProfileInfos(req, res) {
 		const token = req.header("Authorization")?.replace("Bearer ", "");
 		const { email } = jwt.decode(token);
-		console.log(email);
 		const profile = await Profile.profileDataCustumized(email);
 		return res.status(200).json({ data: profile });
 	}
-}
+}  
 
 module.exports = ProfileController;

@@ -12,7 +12,7 @@ const verifyAccount = async (req, res, next) => {
 		if (profile.verified_account) {
 			return res
 				.status(200)
-				.json({ shouldRedirect: true, redirectTo: "/profile" });
+				.json({ shouldRedirect: true, redirectTo: "/accueil" });
 		}
 	}
 	next();
