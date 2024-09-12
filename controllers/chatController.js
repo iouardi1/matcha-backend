@@ -56,7 +56,6 @@ class ChatController {
         const user_id = parseInt(req.params.user_id, 10);
         try {
             const conversations = await Conversation.getAllConversationsByUserId(user_id);
-            console.log('conversations: ', conversations)
             return res.status(201).json({
                 message: 'all conversations are fetched successfully',
                 data: conversations,

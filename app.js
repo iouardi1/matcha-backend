@@ -49,7 +49,6 @@ io.on("connection", (socket) => {
   // Handle receiving a new message
   socket.on("new message", (messageData) => {
     const { conversationId, message_text, participant_id } = messageData;
-    console.log('Message data: ', messageData);
      ChatController.addNewMessage(messageData)
       .then(() => {
         console.log(`Message saved in the database.`);
@@ -71,9 +70,6 @@ io.on("connection", (socket) => {
 
     console.log(`New message in conversation ${conversationId}: ${message_text}`);
   });
-  socket.on("join room", (id) => {
-    console.log(`join room: `, id);
-  })
 
   // Handle user disconnection
   socket.on("disconnect", () => {
