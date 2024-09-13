@@ -31,9 +31,8 @@ class ProfileController {
 
 	static async getListOfMatches(req, res) {
 		const token = req.header("Authorization")?.replace("Bearer ", "");
-		const { id } = jwt.decode(token);
-		console.log(id);
-		const matches = await Profile.getListOfMatches(id);
+		const { email } = jwt.decode(token);
+		const matches = await Profile.getListOfMatches(email);
 		return res.status(200).json({ data: matches });
 	}
 }
