@@ -1,5 +1,6 @@
 const { default: axios } = require("axios");
 const db = require("../db/db");
+const select = require("../repositories/selectRepo");
 
 const User = {
 	create: async ({ firstname, lastname, username, email, password }) => {
@@ -37,6 +38,11 @@ const User = {
 			);
 		}
 	}, 
+
+	findAllUsers: async () => {
+		const { rows } = await select("users", ["*"], []);
+		// return rows[0];
+	},
 
 	// getAccessTokenByUserId: async (provider_id) => {
 	// 	const { rows } = await db.query( 
