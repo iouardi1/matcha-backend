@@ -106,13 +106,16 @@ const Conversation = {
     getAllConversationsByUserId: async (user_id) => {
       try {
          const query = `
-            SELECT DISTINCT
+             SELECT DISTINCT
                p.conversation_id AS id,
-               p2.user_id AS user_id,
+               p2.user_id AS match_id,
                u.username AS username,
                up.photo_url AS photo,
-               m.message_text AS last_message
+               m.message_text AS last_message,
+			   rt.name AS interested_in_relation
                   FROM participant p
+				  JOIN interested_in_relation ur ON ur.user_id = p.user_id
+				  LEFT JOIN relationship_type rt ON rt.id = ur.relationship_type_id
                   JOIN participant p2 ON p.conversation_id = p2.conversation_id  -- Joining with itself to get other participants in the same conversation
                   JOIN users u ON u.id = p2.user_id  -- Joining with users table to get the user details
                   LEFT JOIN user_photo up ON up.user_id = u.id AND up.active = true  -- Joining with user_photo to get active profile picture
