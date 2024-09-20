@@ -102,7 +102,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRouter);
 app.use("/api/profile", verifyTokenMiddleware, verifyAccountMiddleware, profileRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use('/api/conversations', chatRouters);
+app.use('/api/conversations', verifyTokenMiddleware, verifyAccountMiddleware, chatRouters);
 
 app.get("/logout", (req, res) => {
 	req.logout((err) => {
