@@ -1,8 +1,7 @@
 const { Profile } = require("../models/profileModel");
-
 const verifyAccount = async (req, res, next) => {
 	const profile = await Profile.profileData(req.email);
-	if (req.email && req.path !== "/setup") {
+	if (req.email && (req.path !== "/setup")) {
 		if (!profile.verified_account) {
 			return res
 				.status(200)
@@ -19,3 +18,4 @@ const verifyAccount = async (req, res, next) => {
 };
 
 module.exports = verifyAccount;
+ 

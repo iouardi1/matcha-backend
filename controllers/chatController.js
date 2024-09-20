@@ -20,7 +20,7 @@ class ChatController {
         const { participant_id, message_text } = messageData;
         try {
             const newMessage = await Conversation.addMessage(participant_id, message_text);
-    
+      
           // Send the new message data back to the client
           return res.status(201).json({
             message: 'Message sent successfully',
@@ -65,6 +65,11 @@ class ChatController {
             console.error('Error fetching conversations:', err);
             return res.status(500).json({ err: 'Internal Server Error' });
         }
+    }
+
+    static async test(req, res) {
+        // return res.status(200).json({shouldRedirect:false});
+        return res.status(200).json();
     }
 }
 
