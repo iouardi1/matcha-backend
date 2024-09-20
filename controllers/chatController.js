@@ -1,5 +1,6 @@
+const { findUserIdByEmail } = require("../db/helpers/functions");
 const { Conversation } = require("../models/chatModel");
-
+const jwt = require("jsonwebtoken");
 class ChatController {
     static async getConversationById(req, res) {
     try {
@@ -53,10 +54,11 @@ class ChatController {
     }
 
     static async getConversations(req, res) {
-        const user_id = parseInt(req.params.user_id, 10);
+        const token = req.header("Authorization")?.replace("Bearer ", "");
+		const { email } = jwt.decode(token);
+        const user_id = await findUserIdByEmail(email);
         try {
             const conversations = await Conversation.getAllConversationsByUserId(user_id);
-            console.log('conversations: ', conversations)
             return res.status(201).json({
                 message: 'all conversations are fetched successfully',
                 data: conversations,

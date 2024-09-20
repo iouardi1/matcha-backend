@@ -28,6 +28,13 @@ class ProfileController {
 		const profile = await Profile.profileDataCustumized(email);
 		return res.status(200).json({ data: profile });
 	}
-}  
+
+	static async getListOfMatches(req, res) {
+		const token = req.header("Authorization")?.replace("Bearer ", "");
+		const { email } = jwt.decode(token);
+		const matches = await Profile.getListOfMatches(email);
+		return res.status(200).json({ data: matches });
+	}
+}
 
 module.exports = ProfileController;
