@@ -111,7 +111,7 @@ const Profile = {
 				interestSet,
 			);
 		}, 1000);
-		await update('users', ['verified_account'], [true], [["id", id]])
+		await update('users', ['setup_finished'], [true], [["id", id]])
 		return id;
 	},
 };

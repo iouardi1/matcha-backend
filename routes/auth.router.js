@@ -15,6 +15,7 @@ router.post("/sendVerificationCode", AuthController.sendVerificationCode);
 router.post("/verifyCode", AuthController.verifyCodeUser);
 
 router.post("/resetPassword", AuthController.resetPasswordUser);
+router.get("/verifyEmail", AuthController.verifyEmail);
 
 router.get(
 	"/google",
