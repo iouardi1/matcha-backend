@@ -3,10 +3,10 @@ const db = require("../db/db");
 const select = require("../repositories/selectRepo");
 
 const User = {
-	create: async ({ firstname, lastname, username, email, password }) => {
+	create: async ({ firstname, lastname, username, email, password, verification_token }) => {
 		const { rows } = await db.query(
-			"INSERT INTO users (firstname, lastname, username, email, password) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-			[firstname, lastname, username, email, password],
+			"INSERT INTO users (firstname, lastname, username, email, password, verification_token) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+			[firstname, lastname, username, email, password, verification_token],
 		);
 		return rows[0];
 	},
@@ -17,11 +17,28 @@ const User = {
 		]);
 		return rows[0];
 	},
+	findByVerificationToken: async (verification_token) => {
+		const { rows } = await db.query("SELECT * FROM users WHERE verification_token = $1", [
+			verification_token,
+		]);
+		return rows[0];
+	},
 
 	updatePassword:  async (userId, newPassword) => {
 		const query = 'UPDATE users SET password = $1 WHERE id = $2';
 		const values = [newPassword, userId];
 		await db.query(query, values);
+	},
+
+	updateVerifiedAccount:  async (userId) => {
+		const query = `
+			UPDATE users 
+				SET verified_account = true, verification_token = NULL
+			WHERE id = $1
+			RETURNING *;`
+		const values = [userId];
+		const res = await db.query(query, values);
+		return res.rows[0]
 	},
 
 	createGoogleAccount: async (

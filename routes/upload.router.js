@@ -24,13 +24,23 @@ router.post("/", upload.single("file"), (req, res) => {
 });
 
 router.get("/", (req, res) => {
-	const imagePath = req.query.path
-	res.sendFile(imagePath, (err) => {
+	const absolutePath = req.query.path;
+
+    // Ensure the path is within a specific root directory for security
+    const uploadsDirectory = path.resolve(__dirname, '../uploads');
+
+    // Prevent serving files outside of the intended directory
+    if (!absolutePath.startsWith(uploadsDirectory)) {
+        return res.status(400).json({ error: "Invalid path" });
+    }
+	
+    // Send the file if the path is valid and absolute
+    res.sendFile(absolutePath, { root: '/' }, (err) => {
 		if (err) {
-		  console.error("Error sending the file:", err);
-		  res.status(404).json({ error: "Image not found" });
-		}
-	  });
+            console.error("Error sending the file:", err);
+            res.status(404).json({ error: "Image not found" });
+        }
+    });
 });
 
 router.delete("/", (req, res) => {

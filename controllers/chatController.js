@@ -3,8 +3,9 @@ const { Conversation } = require("../models/chatModel");
 const jwt = require("jsonwebtoken");
 class ChatController {
     static async getConversationById(req, res) {
-    try {
         const conversation_id = parseInt(req.params.id, 10);
+        const io = req.app.get('socketio');
+    try {
         
         if (!conversation_id) {
             return res.status(400).json({ error: 'Conversation ID is required' });
@@ -17,10 +18,10 @@ class ChatController {
             return res.status(500).json({ err: 'Internal Server Error' });
         }
     }
-    static async addNewMessage(messageData) {
-        const { participant_id, message_text } = messageData;
+    static async addNewMessage(req, res, messageData) {
+        const { participant_id, message_text, conversationId } = messageData;
         try {
-            const newMessage = await Conversation.addMessage(participant_id, message_text);
+            const newMessage = await Conversation.addMessage(participant_id, message_text, conversationId);
       
           // Send the new message data back to the client
           return res.status(201).json({
@@ -70,8 +71,7 @@ class ChatController {
     }
 
     static async test(req, res) {
-        // return res.status(200).json({shouldRedirect:false});
-        return res.status(200).json();
+        return res.status(200).json({shouldRedirect:false});
     }
 }
 

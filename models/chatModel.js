@@ -30,10 +30,10 @@ const Conversation = {
         }
     },
 
-    addMessage: async (participant_id, message_text) => {
+    addMessage: async (participant_id, message_text, conversationId) => {
       try {
          const participant =  await db.query(
-            `SELECT p.id as participant_id FROM participant p where p.user_id = '${participant_id}'`
+            `SELECT p.id as participant_id FROM participant p where p.user_id = ${participant_id} AND p.conversation_id = ${conversationId}`
          )
          const result = await db.query(
             `INSERT INTO public.message (participant_id, message_text, ts)

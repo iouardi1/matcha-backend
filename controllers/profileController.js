@@ -3,7 +3,7 @@ const { Profile } = require("../models/profileModel");
 
 class ProfileController {
 	static async getProfileDetails(req, res) {
-		console.log('here');
+		// console.log('here');
 		const token = req.header("Authorization")?.replace("Bearer ", "");
 		const { email } = jwt.decode(token);
 		const profile = await Profile.profileData(email);
