@@ -1,10 +1,11 @@
 //requirements
-require("dotenv").config();
-require("./strategies/googleStrategy");
-const express = require("express");
+require('dotenv').config()
+require('./strategies/googleStrategy')
+const express = require('express')
 
-const passport = require("passport");
-const session = require("express-session");
+const PORT = process.env.PORT || 3000
+const passport = require('passport')
+const session = require('express-session')
 //routes
 const userRouter = require("./routes/user.router");
 const authRoutes = require("./routes/auth.router");
@@ -17,8 +18,8 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 
 //middlewares
-const verifyTokenMiddleware = require("./middlewares/extractToken");
-const verifyAccountMiddleware = require("./middlewares/verifiedAccountMiddleware");
+const verifyTokenMiddleware = require('./middlewares/extractToken')
+const verifyAccountMiddleware = require('./middlewares/verifiedAccountMiddleware')
 
 var cors = require("cors");
 const SocketRouter = require("./routes/socket.router");
@@ -32,24 +33,24 @@ const io = new Server(httpServer, {
 
 
 app.use(
-	cors({
-		origin: `${process.env.CLIENT_URL}`,
-		credentials: true,
-	}),
-);
+    cors({
+        origin: `${process.env.CLIENT_URL}`,
+        credentials: true,
+    })
+)
 
-app.use(express.json());
+app.use(express.json())
 app.use(
-	session({
-		secret: "secret",
-		resave: false,
-		saveUninitialized: false,
-	}),
-);
+    session({
+        secret: 'secret',
+        resave: false,
+        saveUninitialized: false,
+    })
+)
 
-app.use(passport.initialize());
-app.use(passport.session());
-app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize())
+app.use(passport.session())
+app.use(express.urlencoded({ extended: true }))
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRouter);
@@ -71,5 +72,4 @@ app.get("/logout", (req, res) => {
 // app.listen(process.env.PORT, () => {
 // 	console.log(`Server is running on port ${process.env.PORT}`);
 // });
-httpServer.listen(process.env.PORT);
-
+httpServer.listen(process.env.PORT)

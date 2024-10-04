@@ -242,3 +242,68 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.user_interests
     OWNER to postgres;
+
+-- new tables and sequences
+    CREATE TABLE user_potential_matches (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    user_match_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_match_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_matches (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    user_match_id INT NOT NULL,
+    match_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_match_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE blocks (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    user_blocked_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_blocked_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE SEQUENCE IF NOT EXISTS public.user_potential_matches_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE public.user_potential_matches_id_seq
+    OWNED BY public.user_potential_matches.id;
+
+ALTER SEQUENCE public.user_potential_matches_id_seq
+    OWNER TO postgres;
+
+CREATE SEQUENCE IF NOT EXISTS public.user_matches_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE public.user_matches_id_seq
+    OWNED BY public.user_matches.id;
+
+ALTER SEQUENCE public.user_matches_id_seq
+    OWNER TO postgres;
+
+CREATE SEQUENCE IF NOT EXISTS public.blocks_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE public.blocks_id_seq
+    OWNED BY public.blocks.id;
+
+ALTER SEQUENCE public.blocks_id_seq
+    OWNER TO postgres;
