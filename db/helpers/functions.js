@@ -15,8 +15,14 @@ async function findInterestIdByName(name) {
 	return id;
 }
 
+async function findRelationIdByName(name) {
+	const { id } = await select("relationship_type", ["id"], [["name", name]]);
+	return id;
+}
+
 module.exports = {
 	findUserIdByEmail,
 	findGenderIdByName,
 	findInterestIdByName,
+	findRelationIdByName
 };

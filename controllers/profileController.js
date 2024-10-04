@@ -11,17 +11,34 @@ class ProfileController {
 
     static async getSetupProfile(req, res) {
         const { username } = await Profile.profileData(req.email)
-        return res.status(200).json({ username: username })
+        const { genders, interests, relationships } =
+            await Profile.getSetupData()
+
+        return res
+            .status(200)
+            .json({
+                username: username,
+                genders: genders.map((gender) => gender.name),
+                interests: interests.map((interest) => interest.name),
+                relationships: relationships.map(
+                    (relationship) => relationship.name
+                ),
+            })
     }
 
     static async setupProfile(req, res) {
         const data = req.body
-        await Profile.profileSetup(data, req.email)
+        const error = await Profile.profileSetup(data, req.email)
+        if (error.error)
+        {
+            return res.status(400)
+            .json({message: error.error})
+        }
         return res
             .status(200)
             .json({ shouldRedirect: true, redirectTo: '/accueil' })
     }
-
+   
     static async getProfileInfos(req, res) {
         const token = req.header('Authorization')?.replace('Bearer ', '')
         const { email } = jwt.decode(token)
@@ -42,7 +59,9 @@ class ProfileController {
         return res.status(200).json({
             genders: genders.map((gender) => gender.name),
             interests: interests.map((interest) => interest.name),
-            relationships: relationships.map((relationship) => relationship.name)
+            relationships: relationships.map(
+                (relationship) => relationship.name
+            ),
         })
     }
 }

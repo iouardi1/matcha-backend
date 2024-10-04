@@ -3,6 +3,7 @@ const {
     findUserIdByEmail,
     findGenderIdByName,
     findInterestIdByName,
+    findRelationIdByName,
 } = require('../db/helpers/functions')
 const { insertOne } = require('../repositories/insertRepo')
 const { insertMany } = require('../repositories/insertRepo')
@@ -55,7 +56,27 @@ const Profile = {
             intrestedIn,
             birthday,
             username,
+            relation,
         } = data
+
+        if (
+            !images ||
+            images.length < 1 ||
+            !interests ||
+            interests.length < 3 ||
+            !gender ||
+            gender.trim() === '' ||
+            !birthday ||
+            birthday.trim() === '' ||
+            !username ||
+            username.trim() === '' ||
+            !relation ||
+            relation.trim() === ''
+        ) {
+            return {
+                error: 'Invalid profile data. Please ensure all fields are correctly filled.',
+            }
+        }
 
         const id = await findUserIdByEmail(email)
         const gender_id = await findGenderIdByName(gender)
@@ -116,6 +137,14 @@ const Profile = {
             let interest_id = await findInterestIdByName(element)
             interestSet.push([id, interest_id])
         })
+
+        let relationId = await findRelationIdByName(relation)
+
+        await insertOne(
+            'interested_in_relation',
+            ['user_id', 'relationship_type_id'],
+            [id, relationId]
+        )
 
         setTimeout(async () => {
             await insertMany(

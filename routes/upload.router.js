@@ -35,7 +35,7 @@ router.get("/", (req, res) => {
     }
 	
     // Send the file if the path is valid and absolute
-    res.sendFile(absolutePath, { root: '/' }, (err) => {
+    res.sendFile(absolutePath, { root: '' }, (err) => {
 		if (err) {
             console.error("Error sending the file:", err);
             res.status(404).json({ error: "Image not found" });
