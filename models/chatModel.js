@@ -22,7 +22,7 @@ const Conversation = {
                  ORDER BY 
                     m.ts ASC`,
                 [conversation_id]
-            );
+            );  
             return result.rows; // Return array of messages with sender details
         } catch (error) {
             console.error("Error fetching conversation messages:", error);
@@ -134,7 +134,7 @@ const Conversation = {
    
          // If no conversations are found, return an empty array
          if (result.rows.length === 0) {
-            console.log('No conversations found for user.');
+            // console.log('No conversations found for user.');
             return [];
          }
    
