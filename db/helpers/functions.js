@@ -14,6 +14,17 @@ async function findInterestIdByName(name) {
 	const { id } = await select("interests", ["id"], [["name", name]]);
 	return id;
 }
+async function calculateAge(birthday) {
+	const birthDate = new Date(birthday);
+	const today = new Date();
+	let age = today.getFullYear() - birthDate.getFullYear();
+	const monthDiff = today.getMonth() - birthDate.getMonth();
+	if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+	  age--;
+	}
+	return age;
+  };
+
 
 async function findRelationIdByName(name) {
 	const { id } = await select("relationship_type", ["id"], [["name", name]]);
@@ -24,5 +35,6 @@ module.exports = {
 	findUserIdByEmail,
 	findGenderIdByName,
 	findInterestIdByName,
+	calculateAge,
 	findRelationIdByName
 };
