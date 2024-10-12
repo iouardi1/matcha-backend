@@ -35,13 +35,15 @@ const Profile = {
 
     getListOfMatches: async (email) => {
         const { rows } = await db.query(
-            `SELECT 
+            `SELECT
 			u.id AS id,
 			u.username AS username,
 			up.photo_url AS profile_picture
 			FROM users u
 			LEFT JOIN user_photo up ON up.user_id = u.id AND up.active = true
-			WHERE u.email != $1`,
+			WHERE u.email != $1 
+            LIMIT 20;
+            `,
             [email]
         )
         return rows
