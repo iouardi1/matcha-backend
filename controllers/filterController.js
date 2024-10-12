@@ -1,16 +1,14 @@
-const jwt = require("jsonwebtoken");
-const db = require("../db/db");
-const { findUserIdByEmail } = require("../db/helpers/functions");
-
+const jwt = require('jsonwebtoken')
+const db = require('../db/db')
+const { findUserIdByEmail } = require('../db/helpers/functions')
 
 class filterController {
     static filterMatches = async (req, res) => {
-        const token = req.header("Authorization")?.replace("Bearer ", "");
-		const { email } = jwt.decode(token);
-        const { ageGap, location, fameRate } = req.query;
+        const token = req.header('Authorization')?.replace('Bearer ', '')
+        const { email } = jwt.decode(token)
+        const { ageGap, location, fameRate } = req.query
         // il faut filterer les matches existant deja
-        let query = 
-                `WITH user_location AS (
+        let query = `WITH user_location AS (
                     SELECT
                         split_part(location, ',', 1)::float AS user_latitude,
                         split_part(location, ',', 2)::float AS user_longitude
@@ -58,12 +56,12 @@ class filterController {
                         FROM users u2
                         WHERE email = $1
                     )
-                `;
-    const params = [email];
-    let paramIndex = 2;
+                `
+        const params = [email]
+        let paramIndex = 2
 
-    if (location) {
-        query += `
+        if (location) {
+            query += `
             AND ROUND(
                 CAST(
                     6371 * acos(
@@ -74,96 +72,137 @@ class filterController {
                 ), 
                 2
             ) <= $${paramIndex}
-        `;
-        params.push(location);
-        paramIndex++;
-    }
-
-    if (fameRate) {
-        query += ` AND u.famerate >= $${paramIndex}`;
-        params.push(Number(fameRate));
-        paramIndex++;
-    }
-
-    if (ageGap) {
-        const [minAge, maxAge] = ageGap.split('-').map(Number);
-        query += ` AND DATE_PART('year', AGE(u.birthday)) BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
-        params.push(minAge, maxAge);
-        paramIndex += 2;
-    }
-
-    // End the query
-    query += ` ORDER BY u.id, distance ASC;`;
-
-    try {
-        const users = await db.query(query, params);
-        const results = users.rows;
-        return res.json({ message: "Filtered matches result", matches: results });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
+        `
+            params.push(location)
+            paramIndex++
         }
-    };
+
+        if (fameRate) {
+            query += ` AND u.famerate >= $${paramIndex}`
+            params.push(Number(fameRate))
+            paramIndex++
+        }
+
+        if (ageGap) {
+            const [minAge, maxAge] = ageGap.split('-').map(Number)
+            query += ` AND DATE_PART('year', AGE(u.birthday)) BETWEEN $${paramIndex} AND $${
+                paramIndex + 1
+            }`
+            params.push(minAge, maxAge)
+            paramIndex += 2
+        }
+
+        // End the query
+        query += ` ORDER BY u.id, distance ASC;`
+
+        try {
+            const users = await db.query(query, params)
+            const results = users.rows
+            return res.json({
+                message: 'Filtered matches result',
+                matches: results,
+            })
+        } catch (error) {
+            console.error(error)
+            res.status(500).json({ message: 'Server error' })
+        }
+    }
+
     static swipeRight = async (req, res) => {
         try {
-            const { liked_user_id } = req.body;
+            const liked_user_id = req.body.id
 
-            const token = req.header("Authorization")?.replace("Bearer ", "");
-            
-            const decoded = jwt.decode(token);
-            if (!decoded || !decoded.email) return res.status(401).json({ message: "Invalid token" });
-    
-            const email = decoded.email;
-            const id = await findUserIdByEmail(email);
-            if (!id) return res.status(404).json({ message: "Authenticated user not found" });
-    
+            const token = req.header('Authorization')?.replace('Bearer ', '')
+
+            const decoded = jwt.decode(token)
+            if (!decoded || !decoded.email)
+                return res.status(401).json({ message: 'Invalid token' })
+
+            const email = decoded.email
+            const id = await findUserIdByEmail(email)
+            if (!id)
+                return res
+                    .status(404)
+                    .json({ message: 'Authenticated user not found' })
+
             // Prevent user from liking themselves
             if (id === liked_user_id) {
-                return res.status(400).json({ message: "You cannot like your own profile" });
+                return res
+                    .status(400)
+                    .json({ message: 'You cannot like your own profile' })
             }
-    
+
             // Check if the user has already liked the liked_user_id
             const alreadyLikedQuery = `
-                SELECT id FROM user_likes WHERE liker_id = $1 AND liked_user_id = $2`;
-            const alreadyLiked = await db.query(alreadyLikedQuery, [id, liked_user_id]);
-    
+                SELECT id FROM user_likes WHERE liker_id = $1 AND liked_user_id = $2`
+            const alreadyLiked = await db.query(alreadyLikedQuery, [
+                id,
+                liked_user_id,
+            ])
+
             if (alreadyLiked.rowCount > 0) {
-                return res.status(400).json({ message: "You have already liked this profile" });
+                return res
+                    .status(400)
+                    .json({ message: 'You have already liked this profile' })
             }
 
             const potentialMatchQuery = `
-                SELECT id FROM user_likes WHERE liker_id = $1 AND liked_user_id = $2`;
-            const potentialMatch = await db.query(potentialMatchQuery, [liked_user_id, id]);
+                SELECT id FROM user_likes WHERE liker_id = $1 AND liked_user_id = $2`
+            const potentialMatch = await db.query(potentialMatchQuery, [
+                liked_user_id,
+                id,
+            ])
+            const alreadyMatchedQuery = `
+                SELECT id FROM user_matches WHERE user1_id = $1 AND user2_id = $2 OR user1_id = $2 AND user2_id = $1`
+            const alreadyMatched = await db.query(alreadyMatchedQuery, [
+                liked_user_id,
+                id,
+            ])
+
+            if (alreadyMatched.rowCount > 0) {
+                return res
+                    .status(400)
+                    .json({ message: 'You have already matched this profile' })
+            }
 
             if (potentialMatch.rowCount > 0) {
                 const createMatchQuery = `
                     INSERT INTO user_matches (user1_id, user2_id, matched_at)
                     VALUES ($1, $2, NOW())
-                    RETURNING id, user1_id, user2_id, matched_at`;
-                const newMatch = await db.query(createMatchQuery, [id, liked_user_id]);
-    
+                    RETURNING id, user1_id, user2_id, matched_at`
+                const newMatch = await db.query(createMatchQuery, [
+                    id,
+                    liked_user_id,
+                ])
+
                 return res.json({
-                    message: "New match created successfully",
-                    newMatch: newMatch.rows[0]
-                });
+                    message: 'New match created successfully',
+                    newMatch: newMatch.rows[0],
+                })
             }
-    
+            //  else if (potentialMatch.rowCount == 0) {
+            //     return res
+            //         .status(400)
+            //         .json({ message: 'You have already liked this profile' })
+            // }
+
             const createLikeQuery = `
                 INSERT INTO user_likes (liker_id, liked_user_id, created_at)
                 VALUES ($1, $2, NOW())
-                RETURNING id, liker_id, liked_user_id, created_at`;
-            const newLike = await db.query(createLikeQuery, [id, liked_user_id]);
-    
+                RETURNING id, liker_id, liked_user_id, created_at`
+            const newLike = await db.query(createLikeQuery, [id, liked_user_id])
+
             return res.json({
-                message: "New profile like created successfully",
-                likeRecord: newLike.rows[0]
-            });
-    
+                message: 'New profile like created successfully',
+                likeRecord: newLike.rows[0],
+            })
         } catch (error) {
-            console.error("Error in swipeRight:", error);
-            return res.status(500).json({ message: "An error occurred while processing your request" });
+            console.error('Error in swipeRight:', error)
+            return res.status(500).json({
+                message: 'An error occurred while processing your request',
+            })
         }
-    };
+    }
 }
 
-module.exports = filterController;
+module.exports = filterController

@@ -470,9 +470,6 @@ ALTER TABLE IF EXISTS public.notification
 --       FOREIGN KEY (user2_id) 
 --       REFERENCES users(id)
 --       ON DELETE CASCADE,
---     -- Ensure user1_id < user2_id to avoid duplicate match records
---     CONSTRAINT check_user_order
---       CHECK (user1_id < user2_id)
 -- );
 
 -- CREATE TABLE Notification (
