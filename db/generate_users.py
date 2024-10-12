@@ -18,21 +18,34 @@ from geopy.distance import geodesic
 # Create a Faker instance
 faker = Faker()
 
+PIXABAY_API_KEY = '46466187-6124fe7644789b0d1853d93ae'
+PIXABAY_API_URL = 'https://pixabay.com/api/'
 
-def get_random_person_image(retries=5):
-    for attempt in range(retries):
-        try:
-            response = requests.get("https://api.unsplash.com/photos/random?query=people&client_id=r2rlqXpP6lamWZohIilEydgVHZ8hoQ0fXPuwZ4gy7Lg", timeout=10)
-            if response.status_code == 200:
-                return response.json()['urls']['small']
-            else:
-                print(f"Failed to fetch image: {response.status_code}. Retrying...")
-        except requests.exceptions.Timeout:
-            print("Request timed out. Retrying...")
-        except Exception as e:
-            print(f"An error occurred: {e}. Retrying...")
-        time.sleep(2)  # Wait before retrying
-    return faker.image_url()
+
+
+def fetch_random_profile_photo():
+    try:
+        # Search for 'person' images
+        response = requests.get(
+            PIXABAY_API_URL,
+            params={
+                'key': PIXABAY_API_KEY,
+                'q': random.choice(['portrait', 'person', 'man', 'woman']),  # Search for human-related terms
+                'image_type': 'photo',
+                'category': 'people',  # Category filter for people
+                'per_page': 5  # Fetch a few images to choose from
+            }
+        )
+        data = response.json()
+        if data['hits']:
+            return random.choice(data['hits'])['webformatURL']
+        else:
+            print("No human images found")
+            return None
+    except Exception as e:
+        print(f"Error fetching image: {e}")
+        return None
+
 
 
 def generate_random_location_within_radius(center_lat, center_lon, radius_km=500):
@@ -87,11 +100,11 @@ def insert_users_with_photos_and_locations(user_count):
             user_id = cur.fetchone()[0]
 
             # Insert user photo
-            photo_url = get_random_person_image()
+            photo_url = fetch_random_profile_photo()
             cur.execute(
                 """
-                INSERT INTO user_photo (user_id, photo_url, active)
-                VALUES (%s, %s, true)
+                INSERT INTO user_photo (user_id, photo_url, upload_date, active)
+                VALUES (%s, %s, NOW(), true)
                 """,
                 (user_id, photo_url)
             )

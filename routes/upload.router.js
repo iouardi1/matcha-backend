@@ -26,6 +26,10 @@ router.post("/", upload.single("file"), (req, res) => {
 router.get("/", (req, res) => {
 	const absolutePath = req.query.path;
 
+	if (absolutePath.startsWith("http")) {
+        return res.json({ url: absolutePath });
+    }
+
     // Ensure the path is within a specific root directory for security
     const uploadsDirectory = path.resolve(__dirname, '../uploads');
 
