@@ -58,6 +58,15 @@ def generate_random_location_within_radius(center_lat, center_lon, radius_km=500
 
     return f"{round(center_lat + lat_offset, 6)},{round(center_lon + lon_offset, 6)}"
 
+def get_random_interests(cur):
+    cur.execute("SELECT id FROM interests")
+    interest_ids = [row[0] for row in cur.fetchall()]
+    return random.sample(interest_ids, random.randint(1, 3)) 
+
+def get_random_relationship_type(cur):
+    cur.execute("SELECT id FROM relationship_type ORDER BY RANDOM() LIMIT 1")
+    return cur.fetchone()[0]
+
 # Function to generate a central point and generate users around it
 def insert_users_with_photos_and_locations(user_count):
     # Establish a database connection
@@ -78,7 +87,7 @@ def insert_users_with_photos_and_locations(user_count):
         firstname = faker.first_name()
         lastname = faker.last_name()
         email = faker.unique.email()  # Ensure unique emails
-        password = faker.password()
+        # password = faker.password()
         aboutme = faker.sentence()
         username = faker.user_name()
         birthday = faker.date_of_birth(minimum_age=18, maximum_age=65)
@@ -91,11 +100,11 @@ def insert_users_with_photos_and_locations(user_count):
             # Insert user
             cur.execute(
                 """
-                INSERT INTO users (firstname, lastname, email, password, aboutme, username, birthday, gender_id, location, verified_account, setup_finished)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, true, true)
+                INSERT INTO users (firstname, lastname, email, aboutme, username, birthday, gender_id, location, verified_account, setup_finished)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, true, true)
                 RETURNING id
                 """,
-                (firstname, lastname, email, password, aboutme, username, birthday, gender_id, location)
+                (firstname, lastname, email, aboutme, username, birthday, gender_id, location)
             )
             user_id = cur.fetchone()[0]
 
@@ -119,6 +128,26 @@ def insert_users_with_photos_and_locations(user_count):
                 (user_id, opposite_gender_id)
             )
 
+            interests = get_random_interests(cur)
+            for interest_id in interests:
+                cur.execute(
+                    """
+                    INSERT INTO user_interests (user_id, interest_id)
+                    VALUES (%s, %s)
+                    """,
+                    (user_id, interest_id)
+                )
+
+            # Insert interested_in_relation for each user
+            relationship_type_id = get_random_relationship_type(cur)
+            cur.execute(
+                """
+                INSERT INTO interested_in_relation (user_id, relationship_type_id)
+                VALUES (%s, %s)
+                """,
+                (user_id, relationship_type_id)
+            )
+
         except psycopg2.errors.UniqueViolation:
             print(f"Duplicate email found: {email}. Skipping.")
         except Exception as e:
@@ -130,6 +159,6 @@ def insert_users_with_photos_and_locations(user_count):
     conn.close()
 
 # Call the function to insert users
-insert_users_with_photos_and_locations(500)
+insert_users_with_photos_and_locations(10)
 
 print("500 users with photos, interested_in_gender, and locations inserted successfully.")
