@@ -22,12 +22,13 @@ class filterController {
                     WHERE u1.email = $1
                 )
                 SELECT DISTINCT ON (u.id)
-                    u.id AS user_id,
+                    u.id AS id,
                     u.username AS username,
                     u.birthday AS birthday,
                     u.location AS location,
                     i.gender_id AS interested_in,
                     u.gender_id AS gender,
+                    up.photo_url AS profile_picture,
                     ROUND(
                         CAST(
                             6371 * acos(
@@ -39,6 +40,7 @@ class filterController {
                         2
                     ) AS distance
                 FROM users u
+                JOIN user_photo up on up.user_id = u.id AND active = true
                 LEFT JOIN interested_in_gender i ON i.user_id = u.id
                 JOIN user_location ON true
                 JOIN user_interests ui2 ON ui2.user_id = u.id
@@ -154,6 +156,7 @@ class filterController {
             ])
             const alreadyMatchedQuery = `
                 SELECT id FROM user_matches WHERE user1_id = $1 AND user2_id = $2 OR user1_id = $2 AND user2_id = $1`
+
             const alreadyMatched = await db.query(alreadyMatchedQuery, [
                 liked_user_id,
                 id,

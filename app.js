@@ -57,7 +57,7 @@ app.use("/api/users", userRouter);
 app.use("/api/profile", verifyTokenMiddleware, verifyAccountMiddleware, profileRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use('/api/conversations', verifyTokenMiddleware, verifyAccountMiddleware, chatRoutes);
-app.use('/api/filterMatches', filterRoutes);
+app.use('/api/filterMatches', verifyTokenMiddleware, verifyAccountMiddleware, filterRoutes);
 app.use('/api/location', locationRoutes);
 SocketRouter(io);
 app.get("/logout", (req, res) => {
