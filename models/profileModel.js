@@ -38,6 +38,7 @@ const Profile = {
             `SELECT
                 u.id AS id,
                 u.username AS username,
+            u.email AS email,
                 up.photo_url AS profile_picture
             FROM users u
             LEFT JOIN user_photo up ON up.user_id = u.id AND up.active = true
@@ -54,6 +55,38 @@ const Profile = {
             AND u.email != $1;
             `,
             [email]
+        )
+        return rows
+    },
+
+    getListOfNotifs: async (email) => {
+        const { rows } = await db.query(
+            `
+            SELECT
+                n.type AS type,
+                sender_user.username AS sender,
+                up.photo_url AS profile_picture
+            FROM users u 
+            JOIN notification n ON n.receiverid = u.id
+            JOIN user_photo up ON up.user_id = n.senderid
+            JOIN users sender_user ON sender_user.id = n.senderid
+            WHERE u.email = $1;
+            `,
+            [email]
+        )
+        return rows
+    },
+    
+    createNotif: async (data, email) => {
+        const senderId = await findUserIdByEmail(email)
+        const receiverId = await findUserIdByEmail(data.user)
+        const type = data.notifType
+
+        const { rows } = await db.query(
+            `
+                INSERT INTO Notification (senderId, receiverId,type) values ($1, $2, $3)
+            `,
+            [senderId, receiverId, type]
         )
         return rows
     },
@@ -94,7 +127,7 @@ const Profile = {
         const intrested_in_gender_id = await findGenderIdByName(intrestedIn)
 
         const row = await select('users', ['username'], [['id', id]])
-
+        console.log(gender_id)
         if (row.username === null) {
             await update(
                 'users',
@@ -105,8 +138,8 @@ const Profile = {
         } else {
             await update(
                 'users',
-                ['aboutme', 'birthday'],
-                [bio, new Date(birthday)],
+                ['aboutme', 'birthday', 'gender_id'],
+                [bio, new Date(birthday), gender_id],
                 [['id', id]]
             )
         }
