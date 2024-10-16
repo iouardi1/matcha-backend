@@ -9,5 +9,7 @@ router.post("/setup", ProfileController.setupProfile);
 router.get("/setup", ProfileController.getSetupProfile);
 router.get("/getProfileInfos", ProfileController.getProfileInfos)
 router.get("/getListOfMatches", ProfileController.getListOfMatches)
+router.get("/getListOfNotifications", ProfileController.getListOfNotif)
+router.post("/createNotification", ProfileController.createNotif)
 
 module.exports = router;

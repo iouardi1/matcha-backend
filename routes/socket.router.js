@@ -1,4 +1,8 @@
 const ChatController = require('../controllers/chatController')
+const {
+    findUsernameIdByEmail,
+    getNotifSenderData,
+} = require('../db/helpers/functions')
 const { Conversation } = require('../models/chatModel')
 const SECRET_KEY = process.env.JWT_SECRET
 const jwt = require('jsonwebtoken')
@@ -22,11 +26,8 @@ module.exports = (io) => {
 
     io.on('connection', (socket) => {
         console.log(`User connected: ${socket.id}`)
+        userSocketMap.set(socket.email, socket.id)
 
-        console.log(socket.email)
-        // userSocketMap.set(userId, socket.id);
-
-        // Handle joining a conversation room
         socket.on('join conversation', (conversationId) => {
             socket.join(`room${conversationId}`)
             console.log(
@@ -34,7 +35,6 @@ module.exports = (io) => {
             )
         })
 
-        // Handle leaving a conversation room
         socket.on('leave conversation', (conversationId) => {
             socket.leave(conversationId)
             console.log(`User ${socket.id} left conversation ${conversationId}`)
@@ -62,13 +62,23 @@ module.exports = (io) => {
             )
         })
 
-        socket.on('send notif', async () => {
-            io.emit('notif received')
+        //notification
+        socket.on('send notif', async (notifData) => {
+            const receiver = userSocketMap.get(notifData.user)
+            // const sender = await findUsernameIdByEmail(socket.email)
+            const senderData = await getNotifSenderData(socket.email)
+            const data = {
+                sender: senderData[0].sender,
+                type: notifData.notifType,
+                profile_picture: senderData[0].profile_picture,
+            }
+            io.to(receiver).emit('notif received', data)
         })
 
         // Handle user disconnection
         socket.on('disconnect', () => {
             console.log(`User disconnected: ${socket.id}`)
+            userSocketMap.delete(socket.email)
         })
     })
 }

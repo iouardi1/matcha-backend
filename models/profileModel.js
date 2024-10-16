@@ -38,6 +38,7 @@ const Profile = {
             `SELECT
                 u.id AS id,
                 u.username AS username,
+            u.email AS email,
                 up.photo_url AS profile_picture
             FROM users u
             LEFT JOIN user_photo up ON up.user_id = u.id AND up.active = true
@@ -52,7 +53,7 @@ const Profile = {
                 WHERE (m.user1_id = me.id OR m.user2_id = me.id)
             )
             AND u.email != $1
-            AND u.id NOT IN (
+             AND u.id NOT IN (
                 SELECT blocked_user_id
                 FROM user_blocks
                 WHERE blocker_id = (SELECT id FROM users WHERE email = $1)
@@ -62,11 +63,42 @@ const Profile = {
                 FROM user_blocks
                 WHERE blocked_user_id = (SELECT id FROM users WHERE email = $1)
             );
-
             `,
             [email]
         )
         return rows
+    },
+
+    getListOfNotifs: async (email) => {
+        const { rows } = await db.query(
+            `
+            SELECT
+                n.type AS type,
+                sender_user.username AS sender,
+                up.photo_url AS profile_picture
+            FROM users u 
+            JOIN notification n ON n.receiverid = u.id
+            JOIN user_photo up ON up.user_id = n.senderid
+            JOIN users sender_user ON sender_user.id = n.senderid
+            WHERE u.email = $1;
+            `,
+            [email]
+        )
+        return rows
+    },
+    
+    createNotif: async (data, email) => {
+        const senderId = await findUserIdByEmail(email)
+        const receiverId = await findUserIdByEmail(data.user)
+        const type = data.notifType
+
+        const { rows } = await db.query(
+            `
+                INSERT INTO Notification (senderId, receiverId,type) values ($1, $2, $3)
+            `,
+            [senderId, receiverId, type]
+        )
+        return rows;
     },
 
     profileSetup: async (data, email) => {
@@ -105,7 +137,7 @@ const Profile = {
         const intrested_in_gender_id = await findGenderIdByName(intrestedIn)
 
         const row = await select('users', ['username'], [['id', id]])
-
+        console.log(gender_id)
         if (row.username === null) {
             await update(
                 'users',
