@@ -4,3 +4,10 @@ node_modules
 /package-lock.json
 script.txt
 /repositories/repository.js
+*.py*
+py*
+pip*
+activate*
+faker
+lib*
+*.ps*

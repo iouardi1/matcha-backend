@@ -86,7 +86,7 @@ const Profile = {
         )
         return rows
     },
-    
+       
     createNotif: async (data, email) => {
         const senderId = await findUserIdByEmail(email)
         const receiverId = await findUserIdByEmail(data.user)
