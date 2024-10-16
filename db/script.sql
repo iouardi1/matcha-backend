@@ -399,6 +399,19 @@ TABLESPACE pg_default;
 ALTER TABLE IF EXISTS public.user_matches
     OWNER to postgres;
 
+
+    CREATE TABLE IF NOT EXISTS public.user_dislikes (
+    id SERIAL PRIMARY KEY,
+    disliker_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    disliked_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    disliked_at TIMESTAMP DEFAULT NOW()
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.user_matches
+    OWNER to postgres;
+
 CREATE TABLE IF NOT EXISTS public.notification
 (
     id integer NOT NULL DEFAULT nextval('notification_id_seq'::regclass),

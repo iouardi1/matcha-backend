@@ -51,7 +51,18 @@ const Profile = {
                 JOIN users me ON (me.email = $1)
                 WHERE (m.user1_id = me.id OR m.user2_id = me.id)
             )
-            AND u.email != $1;
+            AND u.email != $1
+            AND u.id NOT IN (
+                SELECT blocked_user_id
+                FROM user_blocks
+                WHERE blocker_id = (SELECT id FROM users WHERE email = $1)
+            )
+            AND u.id NOT IN (
+                SELECT blocker_id
+                FROM user_blocks
+                WHERE blocked_user_id = (SELECT id FROM users WHERE email = $1)
+            );
+
             `,
             [email]
         )
@@ -105,8 +116,8 @@ const Profile = {
         } else {
             await update(
                 'users',
-                ['aboutme', 'birthday'],
-                [bio, new Date(birthday)],
+                ['aboutme', 'birthday' ,'gender_id'],
+                [bio, new Date(birthday), gender_id],
                 [['id', id]]
             )
         }

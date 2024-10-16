@@ -21,6 +21,13 @@ class ChatController {
     static async addNewMessage(req, res, messageData) {
         const { participant_id, message_text, conversationId } = messageData;
         try {
+            const userBlocked = await Conversation.oneOfUsersBlockedTheOther(participant_id, user_id);
+            if (userBlocked) {
+                return res.status(201).json({
+                    message: 'One of the users blocked the other',
+                    data: [],
+              });
+            }
             const newMessage = await Conversation.addMessage(participant_id, message_text, conversationId);
       
           // Send the new message data back to the client
@@ -36,6 +43,13 @@ class ChatController {
     static async initiateNewDM(req, res) {
         const { participant_id, user_id } = req.body;
         try {
+            const userBlocked = await Conversation.oneOfUsersBlockedTheOther(participant_id, user_id);
+            if (userBlocked) {
+                return res.status(201).json({
+                    message: 'One of the users blocked the other',
+                    data: [],
+              });
+            }
             const dmAlreadyInitiated = await Conversation.chatAlreadyExists(participant_id, user_id)
             if (dmAlreadyInitiated) {
                 return res.status(201).json({
