@@ -30,6 +30,7 @@ class filterController {
                         u.gender_id AS gender,
                         up.photo_url AS profile_picture,
                         u.famerate AS famerate,
+                        u.email AS email,
                         ROUND(
                             CAST(
                                 6371 * acos(
@@ -167,6 +168,7 @@ class filterController {
                 liked_user_id,
                 id,
             ])
+
             const alreadyMatchedQuery = `
                 SELECT id FROM user_matches WHERE user1_id = $1 AND user2_id = $2 OR user1_id = $2 AND user2_id = $1`
 
@@ -196,11 +198,7 @@ class filterController {
                     // newMatch: newMatch.rows[0],
                 })
             }
-            //  else if (potentialMatch.rowCount == 0) {
-            //     return res
-            //         .status(400)
-            //         .json({ message: 'You have already liked this profile' })
-            // }
+            
 
             const createLikeQuery = `
                 INSERT INTO user_likes (liker_id, liked_user_id, created_at)
