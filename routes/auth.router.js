@@ -25,7 +25,7 @@ router.get(
 router.get(
 	"/google/callback",
 	passport.authenticate("google", {
-		failureRedirect: process.env.FRONTEND_LOCAL_DEV + "/login",
+		failureRedirect: process.env.FRONTEND_LOCAL_DEV + "/auth/login",
 	}),
 	async (req, res) => {
 		AuthController.loginGoogleUser(req, res)

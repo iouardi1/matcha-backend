@@ -137,7 +137,7 @@ const Profile = {
         const intrested_in_gender_id = await findGenderIdByName(intrestedIn)
 
         const row = await select('users', ['username'], [['id', id]])
-        console.log(gender_id)
+
         if (row.username === null) {
             await update(
                 'users',
