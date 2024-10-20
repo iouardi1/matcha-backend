@@ -32,7 +32,6 @@ class AuthController {
 
             // Send the email
             const result = await transporter.sendMail(mailOptions);
-			// console.log('result: ', result);
 		} catch (error) {
 			console.error('Error sending email:', error);
 			return res.status(500).json({ error: "Internal Server Error" });

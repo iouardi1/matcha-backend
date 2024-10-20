@@ -276,8 +276,7 @@ class filterController {
     }
     static blockUser = async (req, res) => {
         try {
-            const blocked_user_id = req.body.match_id
-            console.log('req body: ', req.body); 
+            const blocked_user_id = req.body.match_id ? req.body.match_id : req.body.id
 
             const token = req.header('Authorization')?.replace('Bearer ', '')
 

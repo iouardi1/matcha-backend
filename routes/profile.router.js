@@ -11,5 +11,6 @@ router.get("/getProfileInfos", ProfileController.getProfileInfos)
 router.get("/getListOfMatches", ProfileController.getListOfMatches)
 router.get("/getListOfNotifications", ProfileController.getListOfNotif)
 router.post("/createNotification", ProfileController.createNotif)
+router.put("/updateProfile", ProfileController.updateProfile)
 
 module.exports = router;
