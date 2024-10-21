@@ -6,6 +6,11 @@ async function findUserIdByEmail(email) {
     return id
 }
 
+async function findEmailByUserId(id) {
+    const { email } = await select('users', ['email'], [['id', id]])
+    return email
+}
+
 async function findUsernameIdByEmail(email) {
     const { username } = await select('users', ['username'], [['email', email]])
     return username
@@ -62,4 +67,5 @@ module.exports = {
     findRelationIdByName,
     findUsernameIdByEmail,
     getNotifSenderData,
+    findEmailByUserId,
 }

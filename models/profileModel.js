@@ -19,6 +19,33 @@ const Profile = {
         return rows[0]
     },
 
+    profileDetails: async (email) => {
+        const { rows } = await db.query(
+            `SELECT 
+                u.*,
+                g.name as gender,
+                ARRAY_AGG(DISTINCT up.photo_url) as photos,
+                ARRAY_AGG(DISTINCT i.name) as interests,
+	                EXTRACT(YEAR FROM AGE(u.birthday)) AS age
+            FROM 
+                users u
+            JOIN 
+                gender g ON u.gender_id = g.id
+            LEFT JOIN 
+                user_photo up ON u.id = up.user_id
+            LEFT JOIN 
+                user_interests ui ON u.id = ui.user_id
+            LEFT JOIN 
+                interests i ON ui.interest_id = i.id
+            WHERE 
+                u.email = $1
+            GROUP BY 
+                u.id, g.name;`,
+            [email]
+        )
+        return rows[0]
+    },
+
     profileDataCustumized: async (email) => {
         const { rows } = await db.query(
             `SELECT 
@@ -78,6 +105,7 @@ const Profile = {
             `
             SELECT
                 n.type AS type,
+                n.createdat AS date,
                 sender_user.username AS sender,
                 up.photo_url AS profile_picture
             FROM users u 
@@ -90,7 +118,7 @@ const Profile = {
         )
         return rows
     },
-       
+
     createNotif: async (data, email) => {
         const senderId = await findUserIdByEmail(email)
         const receiverId = await findUserIdByEmail(data.user)
@@ -102,7 +130,7 @@ const Profile = {
             `,
             [senderId, receiverId, type]
         )
-        return rows;
+        return rows
     },
 
     profileSetup: async (data, email) => {
@@ -152,7 +180,7 @@ const Profile = {
         } else {
             await update(
                 'users',
-                ['aboutme', 'birthday' ,'gender_id'],
+                ['aboutme', 'birthday', 'gender_id'],
                 [bio, new Date(birthday), gender_id],
                 [['id', id]]
             )

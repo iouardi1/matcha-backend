@@ -3,7 +3,8 @@ const router = express.Router();
 const ProfileController = require("../controllers/profileController");
 require("dotenv").config();
 
-router.get("/", ProfileController.getProfileDetails);
+router.get("/", ProfileController.getProfile);
+router.get("/details", ProfileController.getProfileDetails);
 router.get("/setupData", ProfileController.setupData);
 router.post("/setup", ProfileController.setupProfile);
 router.get("/setup", ProfileController.getSetupProfile);
