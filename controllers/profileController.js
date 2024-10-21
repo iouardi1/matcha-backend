@@ -4,13 +4,21 @@ const bcrypt = require("bcrypt");
 const db = require('../db/db');
 const AuthController = require('./authController');
 const { v4: uuidv4 } = require('uuid');
+const { findEmailByUserId } = require('../db/helpers/functions')
 
 class ProfileController {
-    static async getProfileDetails(req, res) {
+    static async getProfile(req, res) {
         const token = req.header('Authorization')?.replace('Bearer ', '')
         const { email } = jwt.decode(token)
         const profile = await Profile.profileData(email)
         return res.status(200).json({ data: profile })
+    }
+
+    static async getProfileDetails(req, res) {
+        const { id } = req.query
+        const email = await findEmailByUserId(id)
+        const profile = await Profile.profileDetails(email)
+        return res.status(200).json({ data: profile, shouldRedirect: false })
     }
 
     static async getSetupProfile(req, res) {

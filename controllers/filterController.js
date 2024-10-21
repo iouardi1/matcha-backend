@@ -198,7 +198,7 @@ class filterController {
                     // newMatch: newMatch.rows[0],
                 })
             }
-            
+
 
             const createLikeQuery = `
                 INSERT INTO user_likes (liker_id, liked_user_id, created_at)
@@ -221,7 +221,7 @@ class filterController {
     static swipeLeft = async (req, res) => {
         try {
             const disliked_user_id = req.body.id
-            // console.log('req body: ', req.body); 
+            // console.log('req body: ', req.body);
 
             const token = req.header('Authorization')?.replace('Bearer ', '')
 
@@ -261,7 +261,10 @@ class filterController {
                 INSERT INTO user_dislikes (disliker_id, disliked_user_id, disliked_at)
                 VALUES ($1, $2, NOW())
                 RETURNING id, disliker_id, disliked_user_id, disliked_at`
-            const newDislike = await db.query(createDislikeQuery, [id, disliked_user_id])
+            const newDislike = await db.query(createDislikeQuery, [
+                id,
+                disliked_user_id,
+            ])
 
             return res.json({
                 message: 'New profile dislike created successfully',
@@ -316,7 +319,10 @@ class filterController {
                 INSERT INTO user_blocks (blocker_id, blocked_user_id, blocked_at)
                 VALUES ($1, $2, NOW())
                 RETURNING id, blocker_id, blocked_user_id, blocked_at`
-            const newBlock = await db.query(createBlockQuery, [id, blocked_user_id])
+            const newBlock = await db.query(createBlockQuery, [
+                id,
+                blocked_user_id,
+            ])
 
             return res.json({
                 message: 'New profile blocked successfully',
