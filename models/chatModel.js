@@ -129,6 +129,13 @@ const Conversation = {
     getAllConversationsByUserId: async (user_id) => {
       try {
          const query = `
+            WITH user_location AS (
+                        SELECT
+                            split_part(location, ',', 1)::float AS user_latitude,
+                            split_part(location, ',', 2)::float AS user_longitude
+                        FROM users
+                        WHERE id = 4591
+                    )
             SELECT DISTINCT
                 p.conversation_id AS id,
                 p2.user_id AS match_id,
@@ -136,9 +143,27 @@ const Conversation = {
                 up.photo_url AS photo,
                 m.message_text AS last_message,
                 m.ts AS last_message_at,
-                rt.name AS interested_in_relation
+                rt.name AS interested_in_relation,
+                um.matched_at AS RealMatchingDate,
+                CASE
+                    WHEN DATE(m.ts) = CURRENT_DATE THEN TO_CHAR(m.ts, 'HH24:MI')  -- Same day: Hour:Minute
+                    WHEN EXTRACT(YEAR FROM m.ts) = EXTRACT(YEAR FROM CURRENT_DATE) THEN TO_CHAR(m.ts, 'DD Month')  -- Same year: Day Month
+                    ELSE TO_CHAR(m.ts, 'DD Month YYYY')  -- Different year: Day Month Year
+                END AS matchingDate,
+                DATE_PART('year', AGE(u.birthday)) AS age,
+                ROUND(
+                    CAST(
+                        6371 * acos(
+                            cos(radians(user_location.user_latitude)) * cos(radians(split_part(u.location, ',', 1)::float))
+                            * cos(radians(split_part(u.location, ',', 2)::float) - radians(user_location.user_longitude))
+                            + sin(radians(user_location.user_latitude)) * sin(radians(split_part(u.location, ',', 1)::float))
+                        ) AS numeric
+                    ), 
+                    2
+			) AS distance
             FROM participant p
             JOIN interested_in_relation ur ON ur.user_id = p.user_id
+            JOIN user_location ON true
             LEFT JOIN relationship_type rt ON rt.id = ur.relationship_type_id
             JOIN participant p2 ON p.conversation_id = p2.conversation_id  -- Joining with itself to get other participants in the same conversation
             JOIN users u ON u.id = p2.user_id  -- Joining with users table to get the user details
@@ -152,6 +177,7 @@ const Conversation = {
                 ) m ON true  -- Lateral join to get the last message text
                 LEFT JOIN user_blocks b1 ON b1.blocker_id = $1 AND b1.blocked_user_id = p2.user_id
                 LEFT JOIN user_blocks b2 ON b2.blocker_id = p2.user_id AND b2.blocked_user_id = $1
+                LEFT JOIN user_matches um ON um.user1_id = u.id OR um.user2_id = u.id
                 WHERE p.user_id = $1
                     AND p2.user_id != $1
                     AND b1.blocked_user_id IS NULL  -- Exclude conversations where the current user blocked the other participant

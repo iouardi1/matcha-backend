@@ -24,10 +24,14 @@ const Profile = {
             `SELECT 
 			u.id AS id,
 			u.username AS username,
-			up.photo_url AS profile_picture
+			up.photo_url AS profile_picture,
+            COUNT(ul.liked_user_id) AS number_of_likes
 			FROM users u
 			LEFT JOIN user_photo up ON up.user_id = u.id AND up.active = true
-			WHERE email = $1`,
+            LEFT JOIN user_likes ul ON ul.liked_user_id = u.id
+			WHERE email = $1
+            GROUP BY u.id, u.username, up.photo_url;
+        `,
             [email]
         )
         return rows[0]
