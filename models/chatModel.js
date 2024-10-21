@@ -134,7 +134,7 @@ const Conversation = {
                             split_part(location, ',', 1)::float AS user_latitude,
                             split_part(location, ',', 2)::float AS user_longitude
                         FROM users
-                        WHERE id = 4591
+                        WHERE id = $1
                     )
             SELECT DISTINCT
                 p.conversation_id AS id,
