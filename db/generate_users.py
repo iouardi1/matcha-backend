@@ -1,35 +1,22 @@
+import os
 import psycopg2
 from faker import Faker
 import random
 import math
 import requests
-import time
-from geopy.distance import geodesic
-
-# conn = psycopg2.connect(
-#     dbname="matcha",     
-#     user="newuser",     
-#     password="password", 
-#     host="localhost",    
-#     port="5432"          
-# )
-# cur = conn.cursor()
+from dotenv import load_dotenv
 
 # Create a Faker instance
 faker = Faker()
-
-PIXABAY_API_KEY = '46466187-6124fe7644789b0d1853d93ae'
-PIXABAY_API_URL = 'https://pixabay.com/api/'
-
-
+load_dotenv()
 
 def fetch_random_profile_photo():
     try:
         # Search for 'person' images
         response = requests.get(
-            PIXABAY_API_URL,
+            os.getenv("PIXABAY_API_URL"),
             params={
-                'key': PIXABAY_API_KEY,
+                'key':  os.getenv("PIXABAY_API_KEY"),
                 'q': random.choice(['portrait', 'person', 'man', 'woman']),  # Search for human-related terms
                 'image_type': 'photo',
                 'category': 'people',  # Category filter for people
@@ -71,11 +58,11 @@ def get_random_relationship_type(cur):
 def insert_users_with_photos_and_locations(user_count):
     # Establish a database connection
     conn = psycopg2.connect(
-        dbname="matcha",     
-        user="newuser",     
-        password="password", 
-        host="localhost",    
-        port="5432"    
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        host=os.getenv("DB_HOST", "localhost"),
+        port=os.getenv("DB_PORT", "5432")
     )
     cur = conn.cursor()
 
@@ -95,16 +82,18 @@ def insert_users_with_photos_and_locations(user_count):
         
         # Generate location within 500 km radius of the central point
         location = generate_random_location_within_radius(center_lat, center_lon)
+        famerate = round(random.uniform(0, 20), 2)
+
 
         try:
             # Insert user
             cur.execute(
                 """
-                INSERT INTO users (firstname, lastname, email, aboutme, username, birthday, gender_id, location, verified_account, setup_finished)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, true, true)
+                INSERT INTO users (firstname, lastname, email, aboutme, username, famerate, birthday, gender_id, location, verified_account, setup_finished)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, true, true)
                 RETURNING id
                 """,
-                (firstname, lastname, email, aboutme, username, birthday, gender_id, location)
+                (firstname, lastname, email, aboutme, username, famerate, birthday, gender_id, location)
             )
             user_id = cur.fetchone()[0]
 
