@@ -19,29 +19,52 @@ const Profile = {
         return rows[0]
     },
 
-    profileDetails: async (email) => {
+    profileDetails: async (email, senderEmail) => {
         const { rows } = await db.query(
-            `SELECT 
-                u.*,
-                g.name as gender,
-                ARRAY_AGG(DISTINCT up.photo_url) as photos,
-                ARRAY_AGG(DISTINCT i.name) as interests,
-	                EXTRACT(YEAR FROM AGE(u.birthday)) AS age
-            FROM 
-                users u
-            JOIN 
-                gender g ON u.gender_id = g.id
-            LEFT JOIN 
-                user_photo up ON u.id = up.user_id
-            LEFT JOIN 
-                user_interests ui ON u.id = ui.user_id
-            LEFT JOIN 
-                interests i ON ui.interest_id = i.id
-            WHERE 
-                u.email = $1
-            GROUP BY 
-                u.id, g.name;`,
-            [email]
+            ` WITH user_location AS (
+                    SELECT
+                        split_part(location, ',', 1)::float AS user_latitude,
+                        split_part(location, ',', 2)::float AS user_longitude
+                    FROM users
+                    WHERE email = $2
+                )
+                SELECT 
+                    u.*,
+                    g.name AS gender,
+                    ARRAY_AGG(DISTINCT up.photo_url) AS photos,
+                    ARRAY_AGG(DISTINCT i.name) AS interests,
+                    EXTRACT(YEAR FROM AGE(u.birthday)) AS age,
+                    rt.name AS relation_type,
+                    ROUND(
+                        CAST(
+                            6371 * acos(
+                                cos(radians(user_location.user_latitude)) * cos(radians(split_part(u.location, ',', 1)::float))
+                                * cos(radians(split_part(u.location, ',', 2)::float) - radians(user_location.user_longitude))
+                                + sin(radians(user_location.user_latitude)) * sin(radians(split_part(u.location, ',', 1)::float))
+                            ) AS numeric
+                        )
+                    ) AS distance
+                FROM 
+                    users u
+                JOIN 
+                    gender g ON u.gender_id = g.id
+                JOIN 
+                    user_location ON true
+                LEFT JOIN 
+                    user_photo up ON u.id = up.user_id
+                LEFT JOIN 
+                    user_interests ui ON u.id = ui.user_id
+                LEFT JOIN 
+                    interests i ON ui.interest_id = i.id
+                LEFT JOIN 
+                    interested_in_relation ir ON u.id = ir.user_id
+                LEFT JOIN 
+                    relationship_type rt ON ir.relationship_type_id = rt.id
+                WHERE 
+                    u.email = $1
+                GROUP BY 
+                    u.id, g.name, user_location.user_latitude, user_location.user_longitude, rt.name;`,
+            [email, senderEmail]
         )
         return rows[0]
     },
