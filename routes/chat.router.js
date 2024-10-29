@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const ChatController = require("../controllers/chatController");
 require("dotenv").config();
-const socketMiddleware = require('../middlewares/socketMiddleware');
 
 router.get("/", ChatController.test);
 router.post("/addNewMessage", ChatController.addNewMessage);

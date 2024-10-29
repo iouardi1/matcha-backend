@@ -43,14 +43,14 @@ module.exports = (io) => {
         // Handle receiving a new message
         socket.on('new message', async (messageData) => {
             const { conversationId, message_text, participant_id } = messageData
-            const newMessage = await Conversation.addMessage(
-                participant_id,
-                message_text,
-                conversationId
-            )
+            // const newMessage = await Conversation.addMessage(
+            //     participant_id,
+            //     message_text,
+            //     conversationId
+            // )
 
             // Emit the message to all users in the conversation room
-            io.to(`room${conversationId}`).emit('message received', {
+            socket.to(`room${conversationId}`).emit('message received', {
                 participant_id,
                 conversationId,
                 message_text,

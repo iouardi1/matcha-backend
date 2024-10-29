@@ -50,8 +50,8 @@ const User = {
 		);
 		if (!rows.length) {
 			const googleUser = await db.query(
-				"INSERT INTO users (firstname, lastname, email, auth_provider, provider_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-				[given_name, family_name, email, provider, id],
+				"INSERT INTO users (firstname, lastname, email, famerate, auth_provider, provider_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+				[given_name, family_name, email, 10, provider, id],
 			);
 		}
 	}, 

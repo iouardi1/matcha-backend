@@ -55,6 +55,7 @@ class AuthController {
 				firstname,
 				lastname,
 				username,
+				famerate: 10,
 				email,
 				password: hashedPassword,
 				verified_account: false,

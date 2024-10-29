@@ -82,18 +82,20 @@ def insert_users_with_photos_and_locations(user_count):
         
         # Generate location within 500 km radius of the central point
         location = generate_random_location_within_radius(center_lat, center_lon)
-        famerate = round(random.uniform(0, 20), 2)
+        # famerate = round(random.uniform(0, 20), 2)
+        famerate = 10
+        password = '$2b$10$AeoI14R1K4NhngoNFFfJvOJKU5PhA6uieCEc369ULqa/5rhv67hWi'
 
 
         try:
             # Insert user
             cur.execute(
                 """
-                INSERT INTO users (firstname, lastname, email, aboutme, username, famerate, birthday, gender_id, location, verified_account, setup_finished)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, true, true)
+                INSERT INTO users (firstname, lastname, email, aboutme, password, username, famerate, birthday, gender_id, location, verified_account, setup_finished)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, true, true)
                 RETURNING id
                 """,
-                (firstname, lastname, email, aboutme, username, famerate, birthday, gender_id, location)
+                (firstname, lastname, email, aboutme, password, username, famerate, birthday, gender_id, location)
             )
             user_id = cur.fetchone()[0]
 
@@ -148,6 +150,6 @@ def insert_users_with_photos_and_locations(user_count):
     conn.close()
 
 # Call the function to insert users
-insert_users_with_photos_and_locations(30)
+insert_users_with_photos_and_locations(40)
 
 print("500 users with photos, interested_in_gender, and locations inserted successfully.")
