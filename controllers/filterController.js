@@ -183,6 +183,21 @@ class filterController {
                     .json({ message: 'You have already matched this profile' })
             }
 
+            const dislikeCheckQuery = `
+                DELETE FROM user_dislikes 
+                WHERE disliker_id = $1 AND disliked_user_id = $2 
+                RETURNING id`
+
+            const dislikeRemoved = await db.query(dislikeCheckQuery, [id, liked_user_id])
+
+
+            const createLikeQuery = `
+                INSERT INTO user_likes (liker_id, liked_user_id, created_at)
+                VALUES ($1, $2, NOW())
+                RETURNING id, liker_id, liked_user_id, created_at`
+            const newLike = await db.query(createLikeQuery, [id, liked_user_id])
+            await filterController.updateFameRate(liked_user_id)
+
             if (potentialMatch.rowCount > 0) {
                 const createMatchQuery = `
                     INSERT INTO user_matches (user1_id, user2_id, matched_at)
@@ -199,13 +214,6 @@ class filterController {
                 })
             }
 
-
-            const createLikeQuery = `
-                INSERT INTO user_likes (liker_id, liked_user_id, created_at)
-                VALUES ($1, $2, NOW())
-                RETURNING id, liker_id, liked_user_id, created_at`
-            const newLike = await db.query(createLikeQuery, [id, liked_user_id])
-
             return res.json({
                 message: 'New profile like created successfully',
                 // likeRecord: newLike.rows[0],
@@ -221,7 +229,6 @@ class filterController {
     static swipeLeft = async (req, res) => {
         try {
             const disliked_user_id = req.body.id
-            // console.log('req body: ', req.body);
 
             const token = req.header('Authorization')?.replace('Bearer ', '')
 
@@ -256,6 +263,13 @@ class filterController {
                     .status(400)
                     .json({ message: 'You have already disliked this profile' })
             }
+
+            const likeCheckQuery = `
+                DELETE FROM user_likes 
+                WHERE liker_id = $1 AND liked_user_id = $2 
+                RETURNING id`
+
+            const likeRemoved = await db.query(likeCheckQuery, [id, disliked_user_id])
 
             const createDislikeQuery = `
                 INSERT INTO user_dislikes (disliker_id, disliked_user_id, disliked_at)
@@ -332,6 +346,81 @@ class filterController {
             return res.status(500).json({
                 message: 'An error occurred while processing your request',
             })
+        }
+    }
+
+    static updateFameRate = async (user_id) => {
+        try {
+            const maxLikesQuery = `
+                SELECT MAX(likes_count) AS max_likes
+                FROM (
+                    SELECT COUNT(*) AS likes_count
+                    FROM user_likes
+                    GROUP BY liked_user_id
+                ) AS likes_data;`
+            const maxLikesResult = await db.query(maxLikesQuery, [])
+            const maxLikes = maxLikesResult.rows[0]?.max_likes || 1  // Default to 1 to prevent division by 0
+    
+            // Get the maximum conversations with more than 10 messages by any user
+            const maxConversationsQuery = `
+              SELECT p1.user_id, COUNT(DISTINCT p1.conversation_id) AS conversation_count
+                FROM participant p1
+                JOIN conversation c ON p1.conversation_id = c.id AND c.fame_rate_updated = true
+                JOIN message m ON m.participant_id = p1.id
+                JOIN (
+                    SELECT p.conversation_id
+                    FROM participant p
+                    JOIN message m ON m.participant_id = p.id
+                    GROUP BY p.conversation_id
+                    HAVING COUNT(m.id) >= 10
+                ) AS convo_with_10_msgs ON convo_with_10_msgs.conversation_id = p1.conversation_id
+                GROUP BY p1.user_id
+                ORDER BY conversation_count DESC
+                LIMIT 1;`
+            const maxConversationsResult = await db.query(maxConversationsQuery, [])
+            const maxConversations = maxConversationsResult.rows[0]?.conversation_count || 1
+    
+            // Get the number of likes the user has received
+            const userLikesQuery = `
+                SELECT MAX(likes_count) AS max_likes 
+                FROM (SELECT COUNT(*) AS likes_count 
+                FROM user_likes WHERE liked_user_id = $1 
+                GROUP BY liked_user_id) AS likes_data`
+            const userLikesResult = await db.query(userLikesQuery, [user_id])
+            const userLikes = userLikesResult.rows[0]?.max_likes || 0
+
+            const userDislikesQuery = `
+                SELECT MAX(dislikes_count) AS max_dislikes 
+                FROM (SELECT COUNT(*) AS dislikes_count 
+                FROM user_dislikes WHERE disliked_user_id = $1 
+                GROUP BY disliked_user_id) AS dislikes_data`
+            const userDislikesResult = await db.query(userDislikesQuery, [user_id])
+            const userDislikes = userDislikesResult.rows[0]?.max_dislikes || 0
+    
+            // Get the number of conversations with more than 10 messages the user is involved in
+            const userConversationsQuery = `
+                SELECT COUNT(DISTINCT p.conversation_id) AS user_conversations
+                FROM participant p
+                JOIN conversation c ON p.conversation_id = c.id AND c.fame_rate_updated = true
+                JOIN (
+                    SELECT p.conversation_id
+                    FROM participant p
+                    JOIN message m ON m.participant_id = p.id
+                    GROUP BY p.conversation_id
+                    HAVING COUNT(m.id) >= 10
+                ) AS convo_with_10_msgs ON p.conversation_id = convo_with_10_msgs.conversation_id
+                WHERE p.user_id = $1`
+            const userConversationsResult = await db.query(userConversationsQuery, [user_id])
+            const userConversations = userConversationsResult.rows[0]?.user_conversations || 0
+            const calculatedFameRate = (0.6 * ((userLikes - userDislikes) / maxLikes)) +( 0.4 * (userConversations / maxConversations)) + 10;
+
+            if (calculatedFameRate < 0) {
+                const updateFameRateQuery = await db.query(`UPDATE users SET famerate = $1 WHERE id = $2`, [0, user_id])
+            } else {
+                const updateFameRateQuery = await db.query(`UPDATE users SET famerate = $1 WHERE id = $2`, [calculatedFameRate, user_id])
+            }
+        } catch (error) {
+            console.error(`Error updating fameRate for user ${user_id}:`, error)
         }
     }
 }

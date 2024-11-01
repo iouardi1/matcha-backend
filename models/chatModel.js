@@ -1,3 +1,4 @@
+const filterController = require("../controllers/filterController");
 const db = require("../db/db");
 
 const Conversation = {
@@ -23,7 +24,7 @@ const Conversation = {
                     m.ts ASC`,
                 [conversation_id]
             );  
-            return result.rows; // Return array of messages with sender details
+            return result.rows;
         } catch (error) {
             console.error("Error fetching conversation messages:", error);
             throw error;
@@ -32,16 +33,56 @@ const Conversation = {
 
     addMessage: async (participant_id, message_text, conversationId) => {
       try {
-         const participant =  await db.query(
-            `SELECT p.id as participant_id FROM participant p where p.user_id = ${participant_id} AND p.conversation_id = ${conversationId}`
-         )
-         const result = await db.query(
-            `INSERT INTO public.message (participant_id, message_text, ts)
-             VALUES ($1, $2, NOW())
-             RETURNING id, participant_id, message_text, ts`,
-            [participant.rows[0].participant_id, message_text]
-          );
-          return result.rows[0]
+            //participant_id in this case is the actual id of the user
+            const otherParticipantIdQuery = await db.query(`
+                SELECT user_id
+                FROM participant
+                WHERE conversation_id = $1
+                AND user_id != $2
+                LIMIT 1;
+            `, [conversationId, participant_id]);
+            const otherParticipantId = otherParticipantIdQuery.rows[0]?.user_id
+            const userBlocked = await Conversation.oneOfUsersBlockedTheOther(participant_id, otherParticipantId);
+            if (userBlocked)
+                return;
+            const participant = await db.query(
+                `SELECT p.id as participant_id FROM participant p WHERE p.user_id = $1 AND p.conversation_id = $2`,
+                [participant_id, conversationId]
+            );
+            const result = await db.query(
+                `INSERT INTO public.message (participant_id, message_text, ts)
+                VALUES ($1, $2, NOW())
+                RETURNING id, participant_id, message_text, ts`,
+                [participant.rows[0].participant_id, message_text]
+            );
+
+            const messageCountQuery = await db.query(`
+               SELECT COUNT(m.id) AS message_count
+                FROM message m
+                JOIN participant p ON m.participant_id = p.id
+                WHERE p.conversation_id = $1;
+            `, [conversationId]);
+            const messageCount = messageCountQuery.rows[0]?.message_count || 0;
+            const convUpdated = await db.query(`
+                select fame_rate_updated 
+                from conversation c 
+                where c.id = $1;
+            `, [conversationId])
+
+
+
+            if (messageCount >= 10 && !convUpdated.rows[0]?.fame_rate_updated) {
+                await db.query(`
+                    UPDATE conversation
+                    SET fame_rate_updated = TRUE
+                    WHERE id = $1;
+                    `, [conversationId]);
+                await filterController.updateFameRate(otherParticipantId)
+                await filterController.updateFameRate(participant_id)
+            }
+
+        return result.rows[0]
+
       } catch (error) {
          console.error("Error fetching conversation messages:", error);
          throw error;
@@ -130,13 +171,13 @@ const Conversation = {
       try {
          const query = `
             WITH user_location AS (
-                        SELECT
-                            split_part(location, ',', 1)::float AS user_latitude,
-                            split_part(location, ',', 2)::float AS user_longitude
-                        FROM users
-                        WHERE id = $1
-                    )
-            SELECT DISTINCT
+                SELECT
+                    split_part(location, ',', 1)::float AS user_latitude,
+                    split_part(location, ',', 2)::float AS user_longitude
+                FROM users
+                WHERE id = $1
+            )
+            SELECT DISTINCT ON (p.conversation_id)  -- Ensures one row per conversation
                 p.conversation_id AS id,
                 p2.user_id AS match_id,
                 u.username AS username,
@@ -146,9 +187,9 @@ const Conversation = {
                 rt.name AS interested_in_relation,
                 um.matched_at AS RealMatchingDate,
                 CASE
-                    WHEN DATE(m.ts) = CURRENT_DATE THEN TO_CHAR(m.ts, 'HH24:MI')  -- Same day: Hour:Minute
-                    WHEN EXTRACT(YEAR FROM m.ts) = EXTRACT(YEAR FROM CURRENT_DATE) THEN TO_CHAR(m.ts, 'DD Month')  -- Same year: Day Month
-                    ELSE TO_CHAR(m.ts, 'DD Month YYYY')  -- Different year: Day Month Year
+                    WHEN DATE(m.ts) = CURRENT_DATE THEN TO_CHAR(m.ts, 'HH24:MI')
+                    WHEN EXTRACT(YEAR FROM m.ts) = EXTRACT(YEAR FROM CURRENT_DATE) THEN TO_CHAR(m.ts, 'DD Month')
+                    ELSE TO_CHAR(m.ts, 'DD Month YYYY')
                 END AS matchingDate,
                 DATE_PART('year', AGE(u.birthday)) AS age,
                 ROUND(
@@ -160,30 +201,29 @@ const Conversation = {
                         ) AS numeric
                     ), 
                     2
-			) AS distance
+                ) AS distance
             FROM participant p
             JOIN interested_in_relation ur ON ur.user_id = p.user_id
             JOIN user_location ON true
             LEFT JOIN relationship_type rt ON rt.id = ur.relationship_type_id
-            JOIN participant p2 ON p.conversation_id = p2.conversation_id  -- Joining with itself to get other participants in the same conversation
-            JOIN users u ON u.id = p2.user_id  -- Joining with users table to get the user details
-            LEFT JOIN user_photo up ON up.user_id = u.id AND up.active = true  -- Joining with user_photo to get active profile picture
-            LEFT JOIN LATERAL (  -- Using LATERAL to get the latest message for each conversation
+            JOIN participant p2 ON p.conversation_id = p2.conversation_id AND p2.user_id != $1
+            JOIN users u ON u.id = p2.user_id
+            LEFT JOIN user_photo up ON up.user_id = u.id AND up.active = true
+            LEFT JOIN LATERAL (
                 SELECT message_text, ts
-                    FROM message m 
-                    WHERE m.participant_id = p.id OR m.participant_id = p2.id 
-                    ORDER BY m.ts DESC
-                    LIMIT 1
-                ) m ON true  -- Lateral join to get the last message text
-                LEFT JOIN user_blocks b1 ON b1.blocker_id = $1 AND b1.blocked_user_id = p2.user_id
-                LEFT JOIN user_blocks b2 ON b2.blocker_id = p2.user_id AND b2.blocked_user_id = $1
-                LEFT JOIN user_matches um ON um.user1_id = u.id OR um.user2_id = u.id
-                WHERE p.user_id = $1
-                    AND p2.user_id != $1
-                    AND b1.blocked_user_id IS NULL  -- Exclude conversations where the current user blocked the other participant
-                    AND b2.blocked_user_id IS NULL
-            ORDER BY m.ts DESC; 
-         `;
+                FROM message m
+                WHERE m.participant_id = p.id OR m.participant_id = p2.id
+                ORDER BY m.ts DESC
+                LIMIT 1
+            ) m ON true
+            LEFT JOIN user_blocks b1 ON b1.blocker_id = $1 AND b1.blocked_user_id = p2.user_id
+            LEFT JOIN user_blocks b2 ON b2.blocker_id = p2.user_id AND b2.blocked_user_id = $1
+            LEFT JOIN user_matches um ON (um.user1_id = $1 AND um.user2_id = u.id) OR (um.user2_id = $1 AND um.user1_id = u.id)
+            WHERE p.user_id = $1
+                AND b1.blocked_user_id IS NULL
+                AND b2.blocked_user_id IS NULL
+            ORDER BY p.conversation_id, m.ts DESC; 
+         `
          const values = [user_id];
          const result = await db.query(query, values);
    

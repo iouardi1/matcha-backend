@@ -1,6 +1,7 @@
 const { findUserIdByEmail } = require("../db/helpers/functions");
 const { Conversation } = require("../models/chatModel");
 const jwt = require("jsonwebtoken");
+const filterController = require("./filterController");
 class ChatController {
     static async getConversationById(req, res) {
         const conversation_id = parseInt(req.params.id, 10);
@@ -18,23 +19,16 @@ class ChatController {
             return res.status(500).json({ err: 'Internal Server Error' });
         }
     }
-    static async addNewMessage(req, res, messageData) {
-        const { participant_id, message_text, conversationId } = messageData;
+    static async addNewMessage(req, res) {
+        const { participant_id, message_text, conversationId } = req.body;
         try {
-            const userBlocked = await Conversation.oneOfUsersBlockedTheOther(participant_id, user_id);
-            if (userBlocked) {
-                return res.status(201).json({
-                    message: 'One of the users blocked the other',
-                    data: [],
-              });
-            }
             const newMessage = await Conversation.addMessage(participant_id, message_text, conversationId);
       
-          // Send the new message data back to the client
-          return res.status(201).json({
-            message: 'Message sent successfully',
-            data: newMessage,
-          });
+            // Send the new message data back to the client
+            return res.status(201).json({
+                message: 'Message sent successfully',
+                data: newMessage,
+            });
         } catch (err) {
             console.error('Error fetching messages:', err);
             return res.status(500).json({ err: 'Internal Server Error' });
