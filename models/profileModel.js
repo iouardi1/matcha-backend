@@ -13,7 +13,7 @@ const update = require('../repositories/updateRepo')
 const Profile = {
     profileData: async (email) => {
         const { rows } = await db.query(
-            'SELECT * FROM users WHERE email = $1',
+            `SELECT id, firstname, lastname, email, famerate, aboutme, username, auth_provider, birthday, setup_finished FROM users u WHERE email = $1`,
             [email]
         )
         return rows[0]
@@ -29,7 +29,18 @@ const Profile = {
                     WHERE email = $2
                 )
                 SELECT 
-                    u.*,
+                    u.id,
+                    u.firstname,
+                    u.lastname,
+                    u.email,
+                    u.famerate,
+                    u.aboutme,
+                    u.username,
+                    u.auth_provider,
+                    u.birthday,
+                    u.setup_finished,
+                    u.status,
+                    U.last_seen,
                     g.name AS gender,
                     ARRAY_AGG(DISTINCT up.photo_url) AS photos,
                     ARRAY_AGG(DISTINCT i.name) AS interests,
@@ -144,7 +155,10 @@ const Profile = {
 
     createNotif: async (data, email) => {
         const senderId = await findUserIdByEmail(email)
-        const receiverId = await findUserIdByEmail(data.user)
+        let receiverId
+        if (data.user) receiverId = await findUserIdByEmail(data.user)
+        else if (data.id) receiverId = data.id
+
         const type = data.notifType
 
         const { rows } = await db.query(

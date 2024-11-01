@@ -1,7 +1,9 @@
 const ChatController = require('../controllers/chatController')
 const {
-    findUsernameIdByEmail,
-    getNotifSenderData,
+        getNotifSenderData,
+    findEmailByUserId,
+    changeStatus,
+    findUserIdByEmail,
 } = require('../db/helpers/functions')
 const { Conversation } = require('../models/chatModel')
 const SECRET_KEY = process.env.JWT_SECRET
@@ -24,8 +26,9 @@ module.exports = (io) => {
         }
     })
 
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
         console.log(`User connected: ${socket.id}`)
+        await changeStatus('online', socket.email)
         userSocketMap.set(socket.email, socket.id)
 
         socket.on('join conversation', (conversationId) => {
@@ -64,21 +67,33 @@ module.exports = (io) => {
 
         //notification
         socket.on('send notif', async (notifData) => {
-            const receiver = userSocketMap.get(notifData.user)
+            let receiver
+            if (notifData.user) {
+                receiver = userSocketMap.get(notifData.user)
+            } else if (notifData.id) {
+                let receiverEmail = await findEmailByUserId(notifData.id)
+                receiver = userSocketMap.get(receiverEmail)
+            }
             // const sender = await findUsernameIdByEmail(socket.email)
             const senderData = await getNotifSenderData(socket.email)
             const data = {
                 sender: senderData[0].sender,
                 type: notifData.notifType,
                 profile_picture: senderData[0].profile_picture,
+                date: new Date(),
+            }
+            if (notifData.notifType === 'like') {
+                const userId = await findUserIdByEmail(socket.email)
+                data.id = userId
             }
             io.to(receiver).emit('notif received', data)
         })
 
         // Handle user disconnection
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
             console.log(`User disconnected: ${socket.id}`)
             userSocketMap.delete(socket.email)
+            await changeStatus('offline', socket.email)
         })
     })
 }
