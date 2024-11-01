@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const db = require('../db/db')
 const { findUserIdByEmail } = require('../db/helpers/functions')
+const { io } = require('../routes/socket.router')
 
 class filterController {
     static filterMatches = async (req, res) => {
@@ -209,10 +210,12 @@ class filterController {
                 ])
 
                 return res.json({
-                    message: 'New match created successfully',
+                    message: 'New match',
                     // newMatch: newMatch.rows[0],
                 })
             }
+
+
 
             return res.json({
                 message: 'New profile like created successfully',
@@ -293,7 +296,9 @@ class filterController {
     }
     static blockUser = async (req, res) => {
         try {
-            const blocked_user_id = req.body.match_id ? req.body.match_id : req.body.id
+            const blocked_user_id = req.body.match_id
+                ? req.body.match_id
+                : req.body.id
 
             const token = req.header('Authorization')?.replace('Bearer ', '')
 

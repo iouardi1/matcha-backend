@@ -1,10 +1,16 @@
 const jwt = require('jsonwebtoken')
 const { Profile } = require('../models/profileModel')
-const bcrypt = require("bcrypt");
-const db = require('../db/db');
-const AuthController = require('./authController');
-const { v4: uuidv4 } = require('uuid');
-const { findEmailByUserId } = require('../db/helpers/functions')
+const bcrypt = require('bcrypt')
+const db = require('../db/db')
+const AuthController = require('./authController')
+const { v4: uuidv4 } = require('uuid')
+const {
+    findEmailByUserId,
+    findUserIdByEmail,
+    updateBasicInfo,
+    updatePhotos,
+    updateUserCredentials,
+} = require('../db/helpers/functions')
 
 class ProfileController {
     static async getProfile(req, res) {
@@ -93,31 +99,70 @@ class ProfileController {
     static async updateProfile(req, res) {
         const token = req.header('Authorization')?.replace('Bearer ', '')
         const emailAddress = jwt.decode(token).email
+        const verificationToken = uuidv4().replace(/-/g, '')
 
-        const { username, firstname, lastname, gender, interests, relation_type, aboutme, email, birthday } = req.body;
+        const userId = await findUserIdByEmail(emailAddress)
+        const { data, images } = req.body
 
-        console.log(gender, " | ", birthday);
+        await updatePhotos(userId, images)
+        await updateBasicInfo(userId, {
+            username: data.username,
+            firstname: data.firstname,
+            lastname: data.lastname,
+            interests: data.interests,
+            relation_type: data.relation_type,
+            aboutme: data.aboutme,
+            birthday: data.birthday,
+            gender: data.gender,
+        })
+        const credentialsUpdates = await updateUserCredentials(
+            userId,
+            data.email,
+            data.password,
+            verificationToken
+        )
+        if (
+            credentialsUpdates.emailUpdated &&
+            !credentialsUpdates.emailUpdated.updated &&
+            credentialsUpdates.message
+        ) {
+            return res.status(200).json({ message: credentialsUpdates.message })
+        }
+        if (
+            credentialsUpdates.emailUpdated &&
+            (credentialsUpdates.passwordUpdated ||
+                credentialsUpdates.emailUpdated.updated)
+        ) {
+            if (credentialsUpdates.emailUpdated.updated) {
+                await AuthController.sendVerificationEmail(
+                    credentialsUpdates.emailUpdated.newEmail,
+                    verificationToken
+                )
+            }
+            return res.status(201)
+            // .json({ shouldRedirect: true, redirectTo: '/auth/login' })
+        }
         // try {
 
         //     const genderQuery = `SELECT id FROM gender g WHERE g.name = $1 LIMIT 1;`;
         //     const genderResult = await db.query(genderQuery, [gender]);
         //     const genderId = genderResult.rows[0]?.id;
-            
+
         //     if (!genderId) {
         //         return res.status(400).json({ message: 'Invalid gender' });
         //     }
-            
+
         //     let interestedInGenderId = null;
         //     if (interested_in_gender) {
         //         const interestedInGenderQuery = `SELECT id FROM gender WHERE name = $1 LIMIT 1`;
         //         const interestedInGenderResult = await db.query(interestedInGenderQuery, [interested_in_gender]);
         //         interestedInGenderId = interestedInGenderResult.rows[0]?.id;
-                
+
         //         if (!interestedInGenderId) {
         //             return res.status(400).json({ message: 'Invalid interested in gender' });
         //         }
         //     }
-            
+
         //     if (interestedInGenderId) {
         //         const interestedInGenderQuery = `
         //         UPDATE interested_in_gender
@@ -126,18 +171,18 @@ class ProfileController {
         //         `;
         //         await db.query(interestedInGenderQuery, [interestedInGenderId, email]);
         //     }
-            
+
         //     let relationshipTypeId = null;
         //     if (relationship_type) {
         //         const relationshipTypeQuery = `SELECT id FROM relationship_type WHERE name = $1 LIMIT 1`;
         //         const relationshipTypeResult = await db.query(relationshipTypeQuery, [relationship_type]);
         //         relationshipTypeId = relationshipTypeResult.rows[0]?.id;
-                
+
         //         if (!relationshipTypeId) {
         //             return res.status(400).json({ message: 'Invalid relationship type' });
         //         }
         //     }
-            
+
         //     if (relationshipTypeId) {
         //         const relationshipUpdateQuery = `
         //         UPDATE interested_in_relation
@@ -146,7 +191,7 @@ class ProfileController {
         //         `;
         //         await db.query(relationshipUpdateQuery, [relationshipTypeId, email]);
         //     }
-            
+
         //     // Update interests
         //     if (interests && interests.length > 0) {
         //         // Delete current interests and insert new ones
@@ -155,7 +200,7 @@ class ProfileController {
         //         WHERE user_id = (SELECT id FROM users WHERE email = $1)
         //         `;
         //         await db.query(deleteInterestsQuery, [email]);
-                
+
         //         const updateInterestsQuery = `
         //         WITH interest_ids AS (
         //             SELECT id
@@ -169,17 +214,17 @@ class ProfileController {
         //                 )
         //                 ON CONFLICT DO NOTHING;
         //                 `;
-                        
+
         //                 await db.query(updateInterestsQuery, [email, interests]);
         //             }
-                    
-                    
+
+
         //             const hashedPassword = await bcrypt.hash(password, 10);
-                    
-                    
+
+        
         //             const query = `
         //             UPDATE users
-        //             SET 
+        //             SET
         //             username = $1,
         //             firstname = $2,
         //             lastname = $3,
@@ -190,25 +235,25 @@ class ProfileController {
         //             email = $8
         //             WHERE email = $9
         //             `;
-                    
+
         //             const userUpdateValues = [username, firstname, lastname, genderId, aboutme, location, hashedPassword, user_email, email];
         //             const updated = await db.query(query, userUpdateValues);
-                    
-        //             if (email !== user_email) {
-        //                 const verificationToken = uuidv4().replace(/-/g, '');
-        //                 const query = `
-        //                         UPDATE users
-        //                         SET 
-        //                             verified_account = false,
-        //                             verification_token = $1
-        //                         WHERE email = $2
-        //                     `
-        //                 await db.query(query, [verificationToken, user_email])
-        //                 await AuthController.sendVerificationEmail(user_email, verificationToken);
-        //                 // return res.status(200).json({ data: updated.rows[0] })
-        //                 return res.status(403).json({ shouldRedirect: true, redirectTo: '/auth/login' });
-        //             }
-                    
+
+        // if (email !== user_email) {
+        //     const verificationToken = uuidv4().replace(/-/g, '');
+        //     const query = `
+        //             UPDATE users
+        //             SET
+        //                 verified_account = false,
+        //                 verification_token = $1
+        //             WHERE email = $2
+        //         `
+        //     await db.query(query, [verificationToken, user_email])
+        //     await AuthController.sendVerificationEmail(user_email, verificationToken);
+        //     // return res.status(200).json({ data: updated.rows[0] })
+        //     return res.status(403).json({ shouldRedirect: true, redirectTo: '/auth/login' });
+        // }
+
         //             // return res.status(200).json({ data: updated.rows[0] })
         // return res.status(200).json({ shouldRedirect: true, redirectTo: '/accueil' });
         // } catch (error){
