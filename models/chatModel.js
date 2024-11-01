@@ -45,9 +45,10 @@ const Conversation = {
             const userBlocked = await Conversation.oneOfUsersBlockedTheOther(participant_id, otherParticipantId);
             if (userBlocked)
                 return;
-            const participant =  await db.query(
-                `SELECT p.id as participant_id FROM participant p where p.user_id = ${participant_id} AND p.conversation_id = ${conversationId}`
-            )
+            const participant = await db.query(
+                `SELECT p.id as participant_id FROM participant p WHERE p.user_id = $1 AND p.conversation_id = $2`,
+                [participant_id, conversationId]
+            );
             const result = await db.query(
                 `INSERT INTO public.message (participant_id, message_text, ts)
                 VALUES ($1, $2, NOW())

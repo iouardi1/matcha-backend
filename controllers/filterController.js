@@ -185,7 +185,7 @@ class filterController {
 
             const dislikeCheckQuery = `
                 DELETE FROM user_dislikes 
-                WHERE disliker_id = $1 AND dislike_user_id = $2 
+                WHERE disliker_id = $1 AND disliked_user_id = $2 
                 RETURNING id`
 
             const dislikeRemoved = await db.query(dislikeCheckQuery, [id, liked_user_id])
@@ -266,7 +266,7 @@ class filterController {
 
             const likeCheckQuery = `
                 DELETE FROM user_likes 
-                WHERE liker_id = $1 AND like_user_id = $2 
+                WHERE liker_id = $1 AND liked_user_id = $2 
                 RETURNING id`
 
             const likeRemoved = await db.query(likeCheckQuery, [id, disliked_user_id])

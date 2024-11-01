@@ -150,6 +150,6 @@ def insert_users_with_photos_and_locations(user_count):
     conn.close()
 
 # Call the function to insert users
-insert_users_with_photos_and_locations(40)
+insert_users_with_photos_and_locations(500)
 
 print("500 users with photos, interested_in_gender, and locations inserted successfully.")

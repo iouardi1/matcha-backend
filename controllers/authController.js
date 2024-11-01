@@ -65,7 +65,7 @@ class AuthController {
 			// await sendVerificationEmail(newUser.email, verificationToken);
 			await AuthController.sendVerificationEmail(newUser.email, verificationToken);
 
-			res.status(201).json({ message: "User registered successfully. Please check your email to verify your account." });
+			return res.status(201).json({ message: "User registered successfully. Please check your email to verify your account." });
 		} catch (error) {
 			if (error.code === "23505" && error.constraint === "unique_email") {
 				return res.status(400).json({ message: "Email already exists" });
@@ -147,8 +147,12 @@ class AuthController {
 	static async verifyCodeUser(req, res) {
 		const { email, code, codeId } = req.body;
 
-		if ( !email || !code || !codeId ) {
+		if ( !email || !code) {
 			return res.status(400).json({ error: "All fields are required" });
+		}
+
+		if (!codeId ) {
+			return res.status(400).json({ message: "Invalid Verification code" });
 		}
 
 		try {
@@ -186,14 +190,14 @@ class AuthController {
 	static async resetPasswordUser(req, res) {
 		const { password, codeId } = req.body;
 		if ( !password || !codeId ) {
-			return res.status(400).json({ error: "All fields are required" });
+			return res.status(400).json({ message: "All fields are required" });
 		}
 
 		try {
 			const storedCodeData = verificationCodes.get(codeId);
 
 			if (!storedCodeData) {
-				return res.status(400).json({ error: "Invalid or expired verification code" });
+				return res.status(400).json({ message: "Invalid or expired verification code" });
 			}
 
 			const { email: storedEmail } = storedCodeData;
@@ -205,7 +209,7 @@ class AuthController {
 			const user = await User.findByEmail(storedEmail);
 
 			if (!user) {
-				return res.status(400).json({ error: "Email doesn't exist" });
+				return res.status(400).json({ message: "Email doesn't exist" });
 			}
 
 			// Hash the new password
