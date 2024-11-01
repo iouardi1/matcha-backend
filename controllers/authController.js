@@ -148,7 +148,7 @@ class AuthController {
 		const { email, code, codeId } = req.body;
 
 		if ( !email || !code) {
-			return res.status(400).json({ error: "All fields are required" });
+			return res.status(400).json({ message: "All fields are required" });
 		}
 
 		if (!codeId ) {
@@ -159,23 +159,23 @@ class AuthController {
 			const user = await User.findByEmail(email);
 
 			if (!user) {
-				return res.status(400).json({ error: "Email doesn't exist" });
+				return res.status(400).json({ message: "Email doesn't exist" });
 			}
 			const storedCodeData = verificationCodes.get(codeId);
 
 			if (!storedCodeData) {
-				return res.status(400).json({ error: "Invalid or expired verification code" });
+				return res.status(400).json({ message: "Invalid or expired verification code" });
 			}
 
 			const { email: storedEmail, code: storedCode, expiresAt } = storedCodeData;
 
 			if (Date.now() > expiresAt) {
 				verificationCodes.delete(codeId);
-				return res.status(400).json({ error: "Verification code expired" });
+				return res.status(400).json({ message: "Verification code expired" });
 			}
 
 			if (parseInt(code, 10) !== storedCode) {
-				return res.status(400).json({ error: "Invalid verification code" });
+				return res.status(400).json({ message: "Invalid verification code" });
 			}
 
 			// Verification successful
