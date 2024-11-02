@@ -59,6 +59,14 @@ app.use("/api/upload", uploadRoutes);
 app.use('/api/conversations', verifyTokenMiddleware, verifyAccountMiddleware, chatRoutes);
 app.use('/api/filterMatches', verifyTokenMiddleware, verifyAccountMiddleware, filterRoutes);
 app.use('/api/location', locationRoutes);
+app.post('/api/logout', (req, res) => {
+  res.clearCookie('accessToken')
+  res.status(200).json({
+      shouldRedirect: true,
+      redirectTo: '/auth/login',
+      message: 'Logout',
+  })
+})
 SocketRouter(io);
 app.get("/logout", (req, res) => {
 	req.logout((err) => {
