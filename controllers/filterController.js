@@ -7,7 +7,7 @@ class filterController {
     static filterMatches = async (req, res) => {
         const token = req.header('Authorization')?.replace('Bearer ', '')
         const { email } = jwt.decode(token)
-        const { ageGap, location, fameRate } = req.query
+        const { ageGap, location, fameRate, limit, offset = 0 } = req.query
         // il faut filterer les matches existant deja
         let query = `WITH user_location AS (
                         SELECT
@@ -22,7 +22,7 @@ class filterController {
                         JOIN users u1 ON u1.id = ui1.user_id
                         WHERE u1.email = $1
                     )
-                    SELECT DISTINCT ON (u.id)
+                    SELECT DISTINCT
                         u.id AS id,
                         u.username AS username,
                         DATE_PART('year', AGE(u.birthday)) AS age,
@@ -110,7 +110,8 @@ class filterController {
         }
 
         // End the query
-        query += ` ORDER BY u.id, distance ASC;`
+        query += ` ORDER BY distance ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1};`;
+        params.push(Number(limit), Number(offset));
 
         try {
             const users = await db.query(query, params)

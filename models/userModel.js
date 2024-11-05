@@ -12,8 +12,8 @@ const User = {
         verification_token,
     }) => {
         const { rows } = await db.query(
-            'INSERT INTO users (firstname, lastname, username, email, password, verification_token) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [firstname, lastname, username, email, password, verification_token]
+            'INSERT INTO users (firstname, lastname, username, email, password, famerate, verification_token) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [firstname, lastname, username, email, password, 10, verification_token]
         )
         return rows[0]
     },

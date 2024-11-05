@@ -177,7 +177,7 @@ const Conversation = {
                 FROM users
                 WHERE id = $1
             )
-            SELECT DISTINCT ON (p.conversation_id)  -- Ensures one row per conversation
+            SELECT DISTINCT
                 p.conversation_id AS id,
                 p2.user_id AS match_id,
                 u.username AS username,
@@ -222,7 +222,7 @@ const Conversation = {
             WHERE p.user_id = $1
                 AND b1.blocked_user_id IS NULL
                 AND b2.blocked_user_id IS NULL
-            ORDER BY p.conversation_id, m.ts DESC; 
+            ORDER BY m.ts DESC; 
          `
          const values = [user_id];
          const result = await db.query(query, values);

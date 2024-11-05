@@ -55,7 +55,6 @@ class AuthController {
 				firstname,
 				lastname,
 				username,
-				famerate: 10,
 				email,
 				password: hashedPassword,
 				verified_account: false,
@@ -326,7 +325,7 @@ class AuthController {
             }
 
             const token = jwt.sign({ email: req.user.email }, SECRET_KEY, {
-                expiresIn: '12h',
+                expiresIn: '1h',
             })
             res.cookie('accessToken', token)
             res.redirect(process.env.FRONTEND_LOCAL_DEV + '/accueil')

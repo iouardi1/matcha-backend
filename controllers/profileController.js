@@ -50,9 +50,11 @@ class ProfileController {
         if (error.error) {
             return res.status(400).json({ message: error.error })
         }
-        return res
+        setTimeout(() => { 
+            return res
             .status(200)
             .json({ shouldRedirect: true, redirectTo: '/accueil' })
+        }, 2000);
     }
 
     static async getProfileInfos(req, res) {
