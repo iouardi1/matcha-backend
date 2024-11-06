@@ -84,7 +84,7 @@ def insert_users_with_photos_and_locations(user_count):
         location = generate_random_location_within_radius(center_lat, center_lon)
         # famerate = round(random.uniform(0, 20), 2)
         famerate = 10
-        password = '$2b$10$AeoI14R1K4NhngoNFFfJvOJKU5PhA6uieCEc369ULqa/5rhv67hWi'
+        password = '$2b$10$nJxvE2WKjgOQh.uq.bg9YuWMmP4sKP1RtHvye81io7Crjy1KaijNG'
 
 
         try:

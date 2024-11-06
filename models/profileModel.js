@@ -140,6 +140,7 @@ const Profile = {
             SELECT
                 n.type AS type,
                 n.createdat AS date,
+                n.senderid AS senderid,
                 sender_user.username AS sender,
                 up.photo_url AS profile_picture
             FROM users u 

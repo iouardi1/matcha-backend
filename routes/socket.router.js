@@ -1,6 +1,6 @@
 const ChatController = require('../controllers/chatController')
 const {
-        getNotifSenderData,
+    getNotifSenderData,
     findEmailByUserId,
     changeStatus,
     findUserIdByEmail,
@@ -83,8 +83,7 @@ module.exports = (io) => {
                 date: new Date(),
             }
             if (notifData.notifType === 'like') {
-                const userId = await findUserIdByEmail(socket.email)
-                data.id = userId
+                data.senderid = senderData[0].id
             }
             io.to(receiver).emit('notif received', data)
         })

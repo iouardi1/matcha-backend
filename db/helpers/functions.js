@@ -52,7 +52,8 @@ async function getNotifSenderData(email) {
         `
 			SELECT
 					u.username AS sender,
-					up.photo_url AS profile_picture
+					up.photo_url AS profile_picture,
+                    u.id
 			FROM users u 
 			JOIN user_photo up ON up.user_id = u.id
 			WHERE u.email = $1;
@@ -209,7 +210,6 @@ async function updateBasicInfo(userId, newUserData) {
 
         // Update relationship_type if it has changed
         if (newUserData.relation_type) {
-            console.log('object')
             // Get the id of the new relationship type name provided
             const {
                 rows: [relationshipType],
@@ -217,8 +217,6 @@ async function updateBasicInfo(userId, newUserData) {
                 `SELECT id FROM relationship_type WHERE name = $1`,
                 [newUserData.relation_type]
             )
-
-            console.log(relationshipType)
             if (relationshipType) {
                 // Check the current relationship type for the user
                 const {
